@@ -242,7 +242,7 @@ int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *configStruct)
 * @return	@c BASE_TYPES_LIB_NOT_INITIALIZED = uart library is not initialized
 * @return	@c BASE_TYPES_OPER_OK = data was successfully written
 */
-int uart_iqrf_write(void *dataToWrite, unsigned int dataLen)
+int uart_iqrf_write(uint8_t *dataToWrite, unsigned int dataLen)
 {
   uint8_t *dataToSend = NULL;
   int wlen;
@@ -430,6 +430,7 @@ int uart_iqrf_read(void *readBuffer, uint8_t *dataLen, unsigned int timeout)
 */
 int set_interface_attribs(int fd, int speed)
 {
+#ifndef WIN32
     struct termios tty;
 
     if (tcgetattr(fd, &tty) < 0) {
@@ -459,6 +460,7 @@ int set_interface_attribs(int fd, int speed)
     if (tcsetattr(fd, TCSANOW, &tty) != 0) {
         return BASE_TYPES_OPER_ERROR;
     }
+#endif
     return BASE_TYPES_OPER_OK;
 }
 
@@ -475,6 +477,7 @@ int uart_iqrf_open(void)
     return BASE_TYPES_OPER_ERROR;
   }
 
+#ifndef WIN32
   fd = open(uartIqrfConfig->uartDev, O_RDWR | O_NOCTTY | O_SYNC);
   if (fd < 0) {
     fd = NO_FILE_DESCRIPTOR;
@@ -483,6 +486,7 @@ int uart_iqrf_open(void)
 
   // configure port
   set_interface_attribs(fd, uartIqrfConfig->baudRate);
+#endif
 
   return BASE_TYPES_OPER_OK;
 }

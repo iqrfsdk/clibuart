@@ -37,6 +37,9 @@ message(STATUS "CMAKE_C_FLAGS_DEBUG:     ${CMAKE_C_FLAGS_DEBUG}")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+set(clibuart_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
+set(clibuart_FOUND TRUE PARENT_SCOPE)
+
 add_subdirectory(include)
 add_subdirectory(uart_iqrf)
 
