@@ -40,7 +40,9 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_subdirectory(include)
 add_subdirectory(uart_iqrf)
 
-add_subdirectory(sysfs_gpio)
+if(NOT NO_UART_SYSFS_GPIO)
+  add_subdirectory(sysfs_gpio)
+endif()
 add_subdirectory(examples)
 
 # Configure config file.
