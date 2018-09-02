@@ -291,7 +291,9 @@ int uart_iqrf_write(uint8_t *dataToWrite, unsigned int dataLen)
   // send data to module
   wlen = write(fd, dataToSend, senderControl.packetCnt);
   // delay for output
+#ifndef WIN32
   tcdrain(fd);
+#endif
 
   free(dataToSend);
 
