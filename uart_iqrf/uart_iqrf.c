@@ -317,7 +317,7 @@ int uart_iqrf_write(uint8_t *dataToWrite, unsigned int dataLen)
 * @return	@c UART_IQRF_ERROR_CRC = mismatched CRC
 * @return	@c UART_IQRF_ERROR_TIMEOUT = receiver timeout (no data read)
 */
-int uart_iqrf_read(void *readBuffer, uint8_t *dataLen, unsigned int timeout)
+int uart_iqrf_read(uint8_t *readBuffer, uint8_t *dataLen, unsigned int timeout)
 {
   uint8_t *receiveBuffer = NULL;
   uint64_t start;

@@ -83,7 +83,7 @@ UART_IQRF_DECLSPEC int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *configStr
 * @return	@c BASE_TYPES_LIB_NOT_INITIALIZED = uart library is not initialized
 * @return	@c BASE_TYPES_OPER_OK = data was successfully written
 */
-UART_IQRF_DECLSPEC int uart_iqrf_write(void *dataToWrite, unsigned int dataLen);
+UART_IQRF_DECLSPEC int uart_iqrf_write(uint8_t *dataToWrite, unsigned int dataLen);
 
 /**
 * Reads data from TR module
@@ -98,7 +98,7 @@ UART_IQRF_DECLSPEC int uart_iqrf_write(void *dataToWrite, unsigned int dataLen);
 * @return	@c UART_IQRF_ERROR_CRC = mismatched CRC
 * @return	@c UART_IQRF_ERROR_TIMEOUT = receiver timeout (no data read)
 */
-UART_IQRF_DECLSPEC int uart_iqrf_read(void *readBuffer, uint8_t *dataLen, unsigned int timeout);
+UART_IQRF_DECLSPEC int uart_iqrf_read(uint8_t *readBuffer, uint8_t *dataLen, unsigned int timeout);
 
 
 /**
