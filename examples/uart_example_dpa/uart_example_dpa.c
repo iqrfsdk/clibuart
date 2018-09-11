@@ -274,7 +274,7 @@ int execute_dpa_command(const uint8_t *dpaMessage, int dataLen)
     while (operationInProgress) {
 
         printf("Waiting for data.\n\r");
-        operResult = uart_iqrf_read(&dpaResponsePacket, &rxDataLen, rxTimeout);
+        operResult = uart_iqrf_read((uint8_t *)&dpaResponsePacket, &rxDataLen, rxTimeout);
 
         switch (crSm) {
             case PROCESS_CONFIMATION: {
