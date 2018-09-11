@@ -42,10 +42,6 @@ set(clibuart_FOUND TRUE PARENT_SCOPE)
 
 add_subdirectory(include)
 add_subdirectory(uart_iqrf)
-
-if(NOT NO_UART_SYSFS_GPIO)
-  add_subdirectory(sysfs_gpio)
-endif()
 add_subdirectory(examples)
 
 # Configure config file.
