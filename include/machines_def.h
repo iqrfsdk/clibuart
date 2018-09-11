@@ -22,24 +22,12 @@
 
 #ifdef RPI
 
-/** LED GPIO. */
-#define LED_GPIO (22)
 /** PGM Switch GPIO. */
-#define PGM_SW_GPIO (7)
+#define PGM_SW_GPIO (22)
+/** SPI master enable GPIO. */
+#define SPI_MASTER_EN_GPIO (7)
 /** Enable GPIO. */
 #define ENABLE_GPIO (23)
-/** SPI CE GPIO. */
-#define CE0_GPIO (8)
-/** SPI MISO GPIO */
-#define MISO_GPIO (9)
-/** SPI MOSI GPIO */
-#define MOSI_GPIO (10)
-/** SPI SCLK GPIO */
-#define SCLK_GPIO (11)
-/** TR IO1 GPIO. */
-#define IO1_GPIO (24)
-/** TR IO2 GPIO. */
-#define IO2_GPIO (25)
 
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
@@ -53,24 +41,12 @@
 
 #ifdef UP
 
-/** LED GPIO. */
-#define LED_GPIO (22)
 /** PGM Switch GPIO. */
-#define PGM_SW_GPIO (7)
+#define PGM_SW_GPIO (22)
+/** SPI master enable GPIO. */
+#define SPI_MASTER_EN_GPIO (7)
 /** Enable GPIO. */
 #define ENABLE_GPIO (23)
-/** SPI CE GPIO. */
-#define CE0_GPIO (8)
-/** SPI MISO GPIO */
-#define MISO_GPIO (9)
-/** SPI MOSI GPIO */
-#define MOSI_GPIO (10)
-/** SPI SCLK GPIO */
-#define SCLK_GPIO (11)
-/** TR IO1 GPIO. */
-#define IO1_GPIO (24)
-/** TR IO2 GPIO. */
-#define IO2_GPIO (25)
 
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
@@ -83,24 +59,12 @@
 
 #ifdef UP2
 
-/** LED GPIO. */
-#define LED_GPIO (22)
 /** PGM Switch GPIO. */
-#define PGM_SW_GPIO (7)
+#define PGM_SW_GPIO (22)
+/** SPI master enable GPIO. */
+#define SPI_MASTER_EN_GPIO (7)
 /** Enable GPIO. */
 #define ENABLE_GPIO (23)
-/** SPI CE GPIO. */
-#define CE0_GPIO (8)
-/** SPI MISO GPIO */
-#define MISO_GPIO (9)
-/** SPI MOSI GPIO */
-#define MOSI_GPIO (10)
-/** SPI SCLK GPIO */
-#define SCLK_GPIO (11)
-/** TR IO1 GPIO. */
-#define IO1_GPIO (24)
-/** TR IO2 GPIO. */
-#define IO2_GPIO (25)
 
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
@@ -113,24 +77,12 @@
 
 #ifdef OPIZ
 
-/** LED GPIO. */
-#define LED_GPIO (3)
 /** PGM Switch GPIO. */
-#define PGM_SW_GPIO (10)
+#define PGM_SW_GPIO (3)
+/** SPI master enable GPIO. */
+#define SPI_MASTER_EN_GPIO (10)
 /** Enable GPIO. */
 #define ENABLE_GPIO (19)
-/** SPI CE GPIO. */
-#define CE0_GPIO (13)
-/** SPI MISO GPIO */
-#define MISO_GPIO (16)
-/** SPI MOSI GPIO */
-#define MOSI_GPIO (15)
-/** SPI SCLK GPIO */
-#define SCLK_GPIO (14)
-/** TR IO1 GPIO. */
-#define IO1_GPIO (18)
-/** TR IO2 GPIO. */
-#define IO2_GPIO (2)
 
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
