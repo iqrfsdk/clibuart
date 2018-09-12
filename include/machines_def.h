@@ -18,28 +18,54 @@
 #ifndef __MACHINES_DEF_H
 #define __MACHINES_DEF_H
 
-#define RPI
+// select used platform (uncomment one selection)
+// #define RPI_1
+#define RPI_3
+// #define UP
+// #define UP2
+// #define OPIZ
 
-#ifdef RPI
+// uncomment if UNI PI board is used
+// #define UNI_PI
 
-/** PGM Switch GPIO. */
-#define PGM_SW_GPIO (22)
-/** SPI master enable GPIO. */
-#define SPI_MASTER_EN_GPIO (7)
-/** Enable GPIO. */
-#define ENABLE_GPIO (23)
+#if defined  (RPI_1) || defined (RPI_3)
+
+/* !!! if GPIO pin is not implemented, define it as -1 */
+
+#ifdef UNI_PI
+    /** PGM Switch GPIO. */
+    #define PGM_SW_GPIO (-1)
+    /** SPI master enable GPIO. */
+    #define SPI_MASTER_EN_GPIO (-1)
+    /** Enable GPIO. */
+    #define ENABLE_GPIO (18)
+#else
+    /** PGM Switch GPIO. */
+    #define PGM_SW_GPIO (22)
+    /** SPI master enable GPIO. */
+    #define SPI_MASTER_EN_GPIO (7)
+    /** Enable GPIO. */
+    #define ENABLE_GPIO (23)
+#endif
 
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
 #ifndef UART_IQRF_DEFAULT_DEVICE
-//  	#define UART_IQRF_DEFAULT_DEVICE "/dev/ttyAMA0"		// Raspberry PI 1
-	#define UART_IQRF_DEFAULT_DEVICE "/dev/ttyS0"		// Raspberry PI 3
+    #ifdef RPI_1
+        #define UART_IQRF_DEFAULT_DEVICE "/dev/ttyAMA0"		// Raspberry PI 1
+    #endif
+
+    #ifdef RPI_3
+        #define UART_IQRF_DEFAULT_DEVICE "/dev/ttyS0"		// Raspberry PI 3
+    #endif
 #endif
 
-#endif /* RPI */
+#endif /* RPI_x */
 
 
 #ifdef UP
+
+/* !!! if GPIO pin is not implemented, define it as -1 */
 
 /** PGM Switch GPIO. */
 #define PGM_SW_GPIO (22)
@@ -59,6 +85,8 @@
 
 #ifdef UP2
 
+/* !!! if GPIO pin is not implemented, define it as -1 */
+
 /** PGM Switch GPIO. */
 #define PGM_SW_GPIO (22)
 /** SPI master enable GPIO. */
@@ -76,6 +104,8 @@
 
 
 #ifdef OPIZ
+
+/* !!! if GPIO pin is not implemented, define it as -1 */
 
 /** PGM Switch GPIO. */
 #define PGM_SW_GPIO (3)

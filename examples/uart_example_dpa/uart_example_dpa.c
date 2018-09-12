@@ -177,6 +177,9 @@ int open_communication(void)
 
     strcpy (myUartIqrfConfig.uartDev, UART_IQRF_DEFAULT_DEVICE);
     myUartIqrfConfig.baudRate = UART_IQRF_DEFAULT_SPEED;
+    myUartIqrfConfig.enableGpioPin = ENABLE_GPIO;
+    myUartIqrfConfig.spiMasterEnGpioPin = SPI_MASTER_EN_GPIO;
+    myUartIqrfConfig.spiPgmSwGpioPin = PGM_SW_GPIO;
 
     operResult = uart_iqrf_init(&myUartIqrfConfig);
     if (operResult < 0) {
