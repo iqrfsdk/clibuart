@@ -20,12 +20,12 @@
  * between Linux system and TR modules using SPI and IO. IO functionality is build
  * up on 'gpio' static library.
  *
- * @file		spi_iqrf.h
- * @date		11.3.2018
+ * @file		uart_iqrf.h
+ * @date		11.9.2018
  */
 
-#ifndef __SPI_IQRF_H
-#define __SPI_IQRF_H
+#ifndef __UART_IQRF_H
+#define __UART_IQRF_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,7 +35,6 @@ extern "C" {
 
 #define UART_IQRF_DECLSPEC
 
-/** SPI device name size */
 // Constant is used to specify array. Therefore, they can not be defined as static const uint8_t.
 #define UART_DEV_CAPACITY 128
 #define UART_IQRF_MAX_DATA_LENGTH  64
@@ -61,10 +60,13 @@ typedef struct
   /** Device file name*/
   char uartDev[UART_DEV_CAPACITY+1];
   int baudRate;
+  int8_t enableGpioPin;
+  int8_t spiMasterEnGpioPin;
+  int8_t spiPgmSwGpioPin;
 } T_UART_IQRF_CONFIG_STRUCT;
 
 /**
-* Initialization of the SPI for IQRF module with advanced setting
+* Initialization of the UART for IQRF module with advanced setting
 *
 * @param	configStruct - configuration structure
 *
@@ -114,4 +116,4 @@ UART_IQRF_DECLSPEC int uart_iqrf_destroy(void);
 }
 #endif
 
-#endif // __SPI_IQRF_H
+#endif // __UART_IQRF_H

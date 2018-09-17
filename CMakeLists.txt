@@ -29,7 +29,7 @@ message(STATUS "CMAKE_C_FLAGS:           ${CMAKE_C_FLAGS}")
 message(STATUS "CMAKE_C_FLAGS_RELEASE:   ${CMAKE_C_FLAGS_RELEASE}")
 message(STATUS "CMAKE_C_FLAGS_DEBUG:     ${CMAKE_C_FLAGS_DEBUG}")
 
-#set(MACHINE RPI)
+#set(MACHINE RPI_3)
 
 # if(MACHINE)
 	# add_definitions(-D${MACHINE})
@@ -42,10 +42,6 @@ set(clibuart_FOUND TRUE PARENT_SCOPE)
 
 add_subdirectory(include)
 add_subdirectory(uart_iqrf)
-
-if(NOT NO_UART_SYSFS_GPIO)
-  add_subdirectory(sysfs_gpio)
-endif()
 add_subdirectory(examples)
 
 # Configure config file.
