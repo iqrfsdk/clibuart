@@ -64,22 +64,22 @@ static uint64_t get_ms_ts()
 
 int ioctl(int fd, int rw, int* mode)
 {
-  return 0;
+    return 0;
 }
 
 int nanosleep(int time)
 {
-  return 0;
+    return 0;
 }
 
 static uint64_t get_ms_ts()
 {
     LARGE_INTEGER counter, frequency;
 
-	QueryPerformanceFrequency(&frequency);
-	QueryPerformanceCounter(&counter);
+    QueryPerformanceFrequency(&frequency);
+    QueryPerformanceCounter(&counter);
 
-	return counter.QuadPart / (frequency.QuadPart / 1000);
+    return counter.QuadPart / (frequency.QuadPart / 1000);
 }
 
 #endif
@@ -117,30 +117,30 @@ static const int NO_FILE_DESCRIPTOR = -1;
 #define HDLC_FRM_ESCAPE_BIT       0x20
 
 typedef struct {
-  uint8_t packetCnt;
-  uint8_t CRC;
+    uint8_t packetCnt;
+    uint8_t CRC;
 } T_UART_SEND_CTRL;
 
 T_UART_SEND_CTRL senderControl;
 
 typedef struct {
-  uint8_t packetCnt;
-  uint8_t CRC;
-  uint8_t decodeInProgress;
-  uint8_t wasEscape;
-  uint8_t delayRxTimeout;
-  int     rBuffCnt;
-  int     timeoutTimer;
+    uint8_t packetCnt;
+    uint8_t CRC;
+    uint8_t decodeInProgress;
+    uint8_t wasEscape;
+    uint8_t delayRxTimeout;
+    int     rBuffCnt;
+    int     timeoutTimer;
 } T_UART_RECEIVER_CONTROL;
 
 T_UART_RECEIVER_CONTROL  receiverControl;
 
 /** Values that represent GPIO directions. */
 typedef enum _clibuart_gpio_direction {
-	///< An enum constant representing GPIO input
-	GPIO_DIRECTION_IN = 0,
-	///< An enum constant representing GPIO output
-	GPIO_DIRECTION_OUT
+    ///< An enum constant representing GPIO input
+    GPIO_DIRECTION_IN = 0,
+    ///< An enum constant representing GPIO output
+    GPIO_DIRECTION_OUT
 } clibuart_gpio_direction;
 
 /************************************/
@@ -183,15 +183,15 @@ int clibuart_gpio_cleanup(int gpio);
  */
 static int check_data_len(unsigned int dataLen)
 {
-  if (dataLen <= 0) {
-    return BASE_TYPES_OPER_ERROR;
-  }
+    if (dataLen <= 0) {
+        return BASE_TYPES_OPER_ERROR;
+    }
 
-  if (dataLen > UART_IQRF_MAX_DATA_LENGTH) {
-    return BASE_TYPES_OPER_ERROR;
-  }
+    if (dataLen > UART_IQRF_MAX_DATA_LENGTH) {
+        return BASE_TYPES_OPER_ERROR;
+    }
 
-  return BASE_TYPES_OPER_OK;
+    return BASE_TYPES_OPER_OK;
 }
 
 /**
@@ -202,18 +202,18 @@ static int check_data_len(unsigned int dataLen)
  */
 uint8_t dpa_do_CRC8(uint8_t inData, uint8_t seed)
 {
-  uint8_t bitsLeft;
+    uint8_t bitsLeft;
 
-	for (bitsLeft = 8; bitsLeft > 0; bitsLeft--) {
-    if (((seed ^ inData) & 0x01) == 0) {
-      seed >>= 1;
+    for (bitsLeft = 8; bitsLeft > 0; bitsLeft--) {
+        if (((seed ^ inData) & 0x01) == 0) {
+            seed >>= 1;
+        }
+        else {
+            seed = (seed >>= 1)^0x8C;
+        }
+        inData >>= 1;
     }
-    else {
-      seed = (seed >>= 1)^0x8C;
-    }
-    inData >>= 1;
-  }
-  return seed;
+    return seed;
 }
 
 
@@ -226,18 +226,18 @@ uint8_t dpa_do_CRC8(uint8_t inData, uint8_t seed)
  */
 uint8_t write_byte_to_buffer(uint8_t *dataBuffer, uint8_t dataByte)
 {
-  senderControl.CRC = dpa_do_CRC8(dataByte, senderControl.CRC);
+    senderControl.CRC = dpa_do_CRC8(dataByte, senderControl.CRC);
 
-  if (dataByte == HDLC_FRM_FLAG_SEQUENCE || dataByte == HDLC_FRM_CONTROL_ESCAPE) {
-    *dataBuffer = HDLC_FRM_CONTROL_ESCAPE;
-    dataBuffer++;
-    *dataBuffer = (dataByte ^ HDLC_FRM_ESCAPE_BIT);
-    return (2);
-  }
-  else {
-    *dataBuffer = dataByte;
-    return (1);
-  }
+    if (dataByte == HDLC_FRM_FLAG_SEQUENCE || dataByte == HDLC_FRM_CONTROL_ESCAPE) {
+        *dataBuffer = HDLC_FRM_CONTROL_ESCAPE;
+        dataBuffer++;
+        *dataBuffer = (dataByte ^ HDLC_FRM_ESCAPE_BIT);
+        return (2);
+    }
+    else {
+        *dataBuffer = dataByte;
+        return (1);
+    }
 }
 
 /**
@@ -251,58 +251,58 @@ uint8_t write_byte_to_buffer(uint8_t *dataBuffer, uint8_t dataByte)
 int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *configStruct)
 {
 
-  if (libIsInitialized == 1) {
-    return BASE_TYPES_OPER_ERROR;
-  }
-
-  uartIqrfConfig = (T_UART_IQRF_CONFIG_STRUCT *)configStruct;
-
-  // Initialize PGM SW pin, SPI master enable pin & power enable
-  if (uartIqrfConfig->spiPgmSwGpioPin != -1) {
-    clibuart_gpio_setup(uartIqrfConfig->spiPgmSwGpioPin, GPIO_DIRECTION_OUT, 0);
-  }
-  if (uartIqrfConfig->enableGpioPin != -1) {
-    clibuart_gpio_setup(uartIqrfConfig->enableGpioPin, GPIO_DIRECTION_OUT, 1);
-  }
-  if (uartIqrfConfig->spiMasterEnGpioPin != -1) {
-    clibuart_gpio_setup(uartIqrfConfig->spiMasterEnGpioPin, GPIO_DIRECTION_OUT, 0);
-    SLEEP(1);
-  }
-
-  // Reset TR module
-  if (uartIqrfConfig->enableGpioPin != -1) {
-      // Disable PWR for TR
-      clibuart_gpio_setValue(uartIqrfConfig->enableGpioPin, 0);
-      // Sleep for 300ms
-      SLEEP(300);
-      // Enable PWR for TR
-      clibuart_gpio_setValue(uartIqrfConfig->enableGpioPin, 1);
-      SLEEP(1);
-  }
-
-  if (uartIqrfConfig->spiMasterEnGpioPin != -1) {
-    clibuart_gpio_setValue(uartIqrfConfig->spiMasterEnGpioPin, 1);
-  }
-
-  // Sleep for 500ms (in this time TR module waits for sequence to switch to programming mode)
-  SLEEP(500);
-
-  if (uart_iqrf_open() == BASE_TYPES_OPER_OK){
-    libIsInitialized = 1;
-    return BASE_TYPES_OPER_OK;
-  }
-  else {
-    if (uartIqrfConfig->enableGpioPin != -1) {
-      clibuart_gpio_cleanup(uartIqrfConfig->enableGpioPin);
+    if (libIsInitialized == 1) {
+        return BASE_TYPES_OPER_ERROR;
     }
-    if (uartIqrfConfig->spiMasterEnGpioPin != -1) {
-      clibuart_gpio_cleanup(uartIqrfConfig->spiMasterEnGpioPin);
+
+    uartIqrfConfig = (T_UART_IQRF_CONFIG_STRUCT *)configStruct;
+
+    // Initialize PGM SW pin, SPI master enable pin & power enable
+    if (uartIqrfConfig->pgmSwitchGpioPin != -1) {
+        clibuart_gpio_setup(uartIqrfConfig->pgmSwitchGpioPin, GPIO_DIRECTION_OUT, 0);
     }
-    if (uartIqrfConfig->spiPgmSwGpioPin != -1) {
-      clibuart_gpio_cleanup(uartIqrfConfig->spiPgmSwGpioPin);
+    if (uartIqrfConfig->powerEnableGpioPin != -1) {
+        clibuart_gpio_setup(uartIqrfConfig->powerEnableGpioPin, GPIO_DIRECTION_OUT, 1);
     }
-    return BASE_TYPES_OPER_ERROR;
-  }
+    if (uartIqrfConfig->busEnableGpioPin != -1) {
+        clibuart_gpio_setup(uartIqrfConfig->busEnableGpioPin, GPIO_DIRECTION_OUT, 0);
+        SLEEP(1);
+    }
+
+    // Reset TR module
+    if (uartIqrfConfig->powerEnableGpioPin != -1) {
+        // Disable PWR for TR
+        clibuart_gpio_setValue(uartIqrfConfig->powerEnableGpioPin, 0);
+        // Sleep for 300ms
+        SLEEP(300);
+        // Enable PWR for TR
+        clibuart_gpio_setValue(uartIqrfConfig->powerEnableGpioPin, 1);
+        SLEEP(1);
+    }
+
+    if (uartIqrfConfig->busEnableGpioPin != -1) {
+        clibuart_gpio_setValue(uartIqrfConfig->busEnableGpioPin, 1);
+    }
+
+    // Sleep for 500ms (in this time TR module waits for sequence to switch to programming mode)
+    SLEEP(500);
+
+    if (uart_iqrf_open() == BASE_TYPES_OPER_OK){
+        libIsInitialized = 1;
+        return BASE_TYPES_OPER_OK;
+    }
+    else {
+        if (uartIqrfConfig->powerEnableGpioPin != -1) {
+            clibuart_gpio_cleanup(uartIqrfConfig->powerEnableGpioPin);
+        }
+        if (uartIqrfConfig->busEnableGpioPin != -1) {
+            clibuart_gpio_cleanup(uartIqrfConfig->busEnableGpioPin);
+        }
+        if (uartIqrfConfig->pgmSwitchGpioPin != -1) {
+            clibuart_gpio_cleanup(uartIqrfConfig->pgmSwitchGpioPin);
+        }
+        return BASE_TYPES_OPER_ERROR;
+    }
 }
 
 /**
@@ -317,64 +317,64 @@ int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *configStruct)
 */
 int uart_iqrf_write(uint8_t *dataToWrite, unsigned int dataLen)
 {
-  uint8_t *dataToSend = NULL;
-  int wlen;
+    uint8_t *dataToSend = NULL;
+    int wlen;
 
-  if (libIsInitialized == 0) {
-    return BASE_TYPES_LIB_NOT_INITIALIZED;
-  }
+    if (libIsInitialized == 0) {
+        return BASE_TYPES_LIB_NOT_INITIALIZED;
+    }
 
-  if (fd < 0) {
-    return BASE_TYPES_OPER_ERROR;
-  }
+    if (fd < 0) {
+        return BASE_TYPES_OPER_ERROR;
+    }
 
-  // checking input parameters
-  if (dataToWrite == NULL) {
-    return BASE_TYPES_OPER_ERROR;
-  }
+    // checking input parameters
+    if (dataToWrite == NULL) {
+        return BASE_TYPES_OPER_ERROR;
+    }
 
-  if (check_data_len(dataLen)) {
-    return BASE_TYPES_OPER_ERROR;
-  }
+    if (check_data_len(dataLen)) {
+        return BASE_TYPES_OPER_ERROR;
+    }
 
-  dataToSend = malloc(256 * sizeof(uint8_t));
-  if (dataToSend == NULL) {
-    return BASE_TYPES_OPER_ERROR;
-  }
+    dataToSend = malloc(256 * sizeof(uint8_t));
+    if (dataToSend == NULL) {
+        return BASE_TYPES_OPER_ERROR;
+    }
 
-  // initialize CRC
-  senderControl.CRC = 0xFF;
-  // start of packet character
-  dataToSend[0] = HDLC_FRM_FLAG_SEQUENCE;
-  // counter of sent bytes
-  senderControl.packetCnt = 1;
+    // initialize CRC
+    senderControl.CRC = 0xFF;
+    // start of packet character
+    dataToSend[0] = HDLC_FRM_FLAG_SEQUENCE;
+    // counter of sent bytes
+    senderControl.packetCnt = 1;
 
-  // send user data
-  while (dataLen) {
-    senderControl.packetCnt += write_byte_to_buffer(&dataToSend[senderControl.packetCnt], *(uint8_t *)dataToWrite);
-    dataToWrite++;
-    dataLen--;
-  }
+    // send user data
+    while (dataLen) {
+        senderControl.packetCnt += write_byte_to_buffer(&dataToSend[senderControl.packetCnt], *(uint8_t *)dataToWrite);
+        dataToWrite++;
+        dataLen--;
+    }
 
-  // send CRC
-  senderControl.packetCnt += write_byte_to_buffer(&dataToSend[senderControl.packetCnt], senderControl.CRC);
-  // send stop of packet character
-  dataToSend[senderControl.packetCnt++] = HDLC_FRM_FLAG_SEQUENCE;
+    // send CRC
+    senderControl.packetCnt += write_byte_to_buffer(&dataToSend[senderControl.packetCnt], senderControl.CRC);
+    // send stop of packet character
+    dataToSend[senderControl.packetCnt++] = HDLC_FRM_FLAG_SEQUENCE;
 
-  // send data to module
-  wlen = write(fd, dataToSend, senderControl.packetCnt);
-  // delay for output
+    // send data to module
+    wlen = write(fd, dataToSend, senderControl.packetCnt);
+    // delay for output
 #ifndef WIN32
-  tcdrain(fd);
+    tcdrain(fd);
 #endif
 
-  free(dataToSend);
+    free(dataToSend);
 
-  if (wlen != senderControl.packetCnt) {
-    return BASE_TYPES_OPER_ERROR;
-  }
+    if (wlen != senderControl.packetCnt) {
+        return BASE_TYPES_OPER_ERROR;
+    }
 
-  return BASE_TYPES_OPER_OK;
+    return BASE_TYPES_OPER_OK;
 }
 
 /**
@@ -392,106 +392,106 @@ int uart_iqrf_write(uint8_t *dataToWrite, unsigned int dataLen)
 */
 int uart_iqrf_read(uint8_t *readBuffer, uint8_t *dataLen, unsigned int timeout)
 {
-  uint8_t *receiveBuffer = NULL;
-  uint64_t start;
-  uint8_t inputChar;
-  int rlen;
+    uint8_t *receiveBuffer = NULL;
+    uint64_t start;
+    uint8_t inputChar;
+    int rlen;
 
-  if (libIsInitialized == 0) {
-    return BASE_TYPES_LIB_NOT_INITIALIZED;
-  }
-
-  if (fd < 0) {
-    return BASE_TYPES_OPER_ERROR;
-  }
-
-  // checking input parameters
-  if (readBuffer == NULL) {
-    return BASE_TYPES_OPER_ERROR;
-  }
-
-  // allocate memory for received data
-  receiveBuffer = malloc(SIZE_OF_UART_RX_BUFFER * sizeof(uint8_t));
-  if (receiveBuffer == NULL) {
-    return BASE_TYPES_OPER_ERROR;
-  }
-
-  receiverControl.decodeInProgress = 0;
-
-  start = get_ms_ts();
-  while (1) {
-
-    rlen = read(fd, receiveBuffer, SIZE_OF_UART_RX_BUFFER - 1);
-
-    receiverControl.rBuffCnt = 0;
-    while (rlen--) {
-      inputChar = receiveBuffer[receiverControl.rBuffCnt++];
-
-      if (receiverControl.decodeInProgress) {
-        // end of packet or DPA structure is full
-        if (inputChar == HDLC_FRM_FLAG_SEQUENCE || receiverControl.packetCnt >= 70) {
-          free(receiveBuffer);
-          if (receiverControl.CRC == 0) {
-            *dataLen = receiverControl.packetCnt - 1;
-            return(BASE_TYPES_OPER_OK);
-          }
-          else {
-            return (UART_IQRF_ERROR_CRC);
-          }
-        }
-
-        // discard received ESCAPE character
-        if (inputChar == HDLC_FRM_CONTROL_ESCAPE) {
-          receiverControl.wasEscape = 1;
-          continue;
-        }
-
-        // previous character was ESCAPE
-        if (receiverControl.wasEscape) {
-          receiverControl.wasEscape = 0;
-          inputChar ^= HDLC_FRM_ESCAPE_BIT;
-        }
-
-        // add Rx byte to CRC
-        receiverControl.CRC = dpa_do_CRC8(inputChar, receiverControl.CRC);
-
-        // write received char to buffer
-        *((uint8_t *)readBuffer + receiverControl.packetCnt) = inputChar;
-        receiverControl.packetCnt++;
-      }
-      else {
-        if (inputChar == HDLC_FRM_FLAG_SEQUENCE) {
-          receiverControl.CRC = 0xFF;
-          receiverControl.packetCnt = 0;
-          receiverControl.wasEscape = 0;
-          receiverControl.delayRxTimeout = 0;
-          receiverControl.decodeInProgress = 1;
-        }
-      }
+    if (libIsInitialized == 0) {
+        return BASE_TYPES_LIB_NOT_INITIALIZED;
     }
 
-    SLEEP(5);
-
-    // check if receiver timeout has been elapsed
-    if ((get_ms_ts() - start) > timeout){
-      if (receiverControl.decodeInProgress){
-        if (receiverControl.delayRxTimeout){
-          break;
-        }
-        else{
-          receiverControl.delayRxTimeout = 1;
-          timeout += 500;
-        }
-      }
-      else{
-        break;
-      }
+    if (fd < 0) {
+        return BASE_TYPES_OPER_ERROR;
     }
-  }
 
-  free(receiveBuffer);
+    // checking input parameters
+    if (readBuffer == NULL) {
+        return BASE_TYPES_OPER_ERROR;
+    }
 
-  return (UART_IQRF_ERROR_TIMEOUT);
+    // allocate memory for received data
+    receiveBuffer = malloc(SIZE_OF_UART_RX_BUFFER * sizeof(uint8_t));
+    if (receiveBuffer == NULL) {
+        return BASE_TYPES_OPER_ERROR;
+    }
+
+    receiverControl.decodeInProgress = 0;
+
+    start = get_ms_ts();
+    while (1) {
+
+        rlen = read(fd, receiveBuffer, SIZE_OF_UART_RX_BUFFER - 1);
+
+        receiverControl.rBuffCnt = 0;
+        while (rlen--) {
+            inputChar = receiveBuffer[receiverControl.rBuffCnt++];
+
+            if (receiverControl.decodeInProgress) {
+                // end of packet or DPA structure is full
+                if (inputChar == HDLC_FRM_FLAG_SEQUENCE || receiverControl.packetCnt >= 70) {
+                    free(receiveBuffer);
+                    if (receiverControl.CRC == 0) {
+                        *dataLen = receiverControl.packetCnt - 1;
+                        return(BASE_TYPES_OPER_OK);
+                    }
+                    else {
+                        return (UART_IQRF_ERROR_CRC);
+                    }
+                }
+
+                // discard received ESCAPE character
+                if (inputChar == HDLC_FRM_CONTROL_ESCAPE) {
+                    receiverControl.wasEscape = 1;
+                    continue;
+                }
+
+                // previous character was ESCAPE
+                if (receiverControl.wasEscape) {
+                    receiverControl.wasEscape = 0;
+                    inputChar ^= HDLC_FRM_ESCAPE_BIT;
+                }
+
+                // add Rx byte to CRC
+                receiverControl.CRC = dpa_do_CRC8(inputChar, receiverControl.CRC);
+
+                // write received char to buffer
+                *((uint8_t *)readBuffer + receiverControl.packetCnt) = inputChar;
+                receiverControl.packetCnt++;
+            }
+            else {
+                if (inputChar == HDLC_FRM_FLAG_SEQUENCE) {
+                    receiverControl.CRC = 0xFF;
+                    receiverControl.packetCnt = 0;
+                    receiverControl.wasEscape = 0;
+                    receiverControl.delayRxTimeout = 0;
+                    receiverControl.decodeInProgress = 1;
+                }
+            }
+        }
+
+        SLEEP(5);
+
+        // check if receiver timeout has been elapsed
+        if ((get_ms_ts() - start) > timeout){
+            if (receiverControl.decodeInProgress){
+                if (receiverControl.delayRxTimeout){
+                    break;
+                }
+                else{
+                    receiverControl.delayRxTimeout = 1;
+                    timeout += 500;
+                }
+            }
+            else{
+                break;
+            }
+        }
+    }
+
+    free(receiveBuffer);
+
+    return (UART_IQRF_ERROR_TIMEOUT);
 }
 
 /**
@@ -548,22 +548,22 @@ int set_interface_attribs(int fd, int speed)
 */
 int uart_iqrf_open(void)
 {
-  if (fd != NO_FILE_DESCRIPTOR) {
-    return BASE_TYPES_OPER_ERROR;
-  }
+    if (fd != NO_FILE_DESCRIPTOR) {
+        return BASE_TYPES_OPER_ERROR;
+    }
 
 #ifndef WIN32
-  fd = open(uartIqrfConfig->uartDev, O_RDWR | O_NOCTTY | O_SYNC);
-  if (fd < 0) {
-    fd = NO_FILE_DESCRIPTOR;
-    return BASE_TYPES_OPER_ERROR;
-  }
+    fd = open(uartIqrfConfig->uartDev, O_RDWR | O_NOCTTY | O_SYNC);
+    if (fd < 0) {
+        fd = NO_FILE_DESCRIPTOR;
+        return BASE_TYPES_OPER_ERROR;
+    }
 
-  // configure port
-  set_interface_attribs(fd, uartIqrfConfig->baudRate);
+    // configure port
+    set_interface_attribs(fd, uartIqrfConfig->baudRate);
 #endif
 
-  return BASE_TYPES_OPER_OK;
+    return BASE_TYPES_OPER_OK;
 }
 
 /**
@@ -576,24 +576,24 @@ int uart_iqrf_open(void)
 */
 int uart_iqrf_close(void)
 {
-  int closeRes;
+    int closeRes;
 
-  if (fd == NO_FILE_DESCRIPTOR) {
-    return BASE_TYPES_LIB_NOT_INITIALIZED;
-  }
+    if (fd == NO_FILE_DESCRIPTOR) {
+        return BASE_TYPES_LIB_NOT_INITIALIZED;
+    }
 
-  if (fd < 0) {
-    return BASE_TYPES_OPER_ERROR;
-  }
+    if (fd < 0) {
+        return BASE_TYPES_OPER_ERROR;
+    }
 
-  closeRes = close(fd);
-  fd = NO_FILE_DESCRIPTOR;
+    closeRes = close(fd);
+    fd = NO_FILE_DESCRIPTOR;
 
-  if (closeRes == -1) {
-    return BASE_TYPES_OPER_ERROR;
-  }
+    if (closeRes == -1) {
+        return BASE_TYPES_OPER_ERROR;
+    }
 
-  return BASE_TYPES_OPER_OK;
+    return BASE_TYPES_OPER_OK;
 }
 
 /**
@@ -607,26 +607,26 @@ int uart_iqrf_close(void)
 int uart_iqrf_destroy(void)
 {
 
-  if (libIsInitialized == 0) {
-    return BASE_TYPES_LIB_NOT_INITIALIZED;
-  }
+    if (libIsInitialized == 0) {
+        return BASE_TYPES_LIB_NOT_INITIALIZED;
+    }
 
-  // after calling this method, the behavior of the library will be
-  // like if the library was not initialized
-  libIsInitialized = 0;
+    // after calling this method, the behavior of the library will be
+    // like if the library was not initialized
+    libIsInitialized = 0;
 
-  // destroy used GPIO pins
-  if (uartIqrfConfig->enableGpioPin != -1) {
-    clibuart_gpio_cleanup(uartIqrfConfig->enableGpioPin);
-  }
-  if (uartIqrfConfig->spiMasterEnGpioPin != -1) {
-    clibuart_gpio_cleanup(uartIqrfConfig->spiMasterEnGpioPin);
-  }
-  if (uartIqrfConfig->spiPgmSwGpioPin != -1) {
-    clibuart_gpio_cleanup(uartIqrfConfig->spiPgmSwGpioPin);
-  }
+    // destroy used GPIO pins
+    if (uartIqrfConfig->powerEnableGpioPin != -1) {
+        clibuart_gpio_cleanup(uartIqrfConfig->powerEnableGpioPin);
+    }
+    if (uartIqrfConfig->busEnableGpioPin != -1) {
+        clibuart_gpio_cleanup(uartIqrfConfig->busEnableGpioPin);
+    }
+    if (uartIqrfConfig->pgmSwitchGpioPin != -1) {
+        clibuart_gpio_cleanup(uartIqrfConfig->pgmSwitchGpioPin);
+    }
 
-  return uart_iqrf_close();
+    return uart_iqrf_close();
 }
 
 /* ========================================================================= */
@@ -644,7 +644,7 @@ int uart_iqrf_destroy(void)
 */
 static void clibuart_setup_gpio_path(const int gpio, const char *action, char *target, int len)
 {
-	snprintf(target, len, GPIO_BASE_PATH"/gpio%d/%s", gpio, action);
+    snprintf(target, len, GPIO_BASE_PATH"/gpio%d/%s", gpio, action);
 }
 
 /**
@@ -658,18 +658,18 @@ static void clibuart_setup_gpio_path(const int gpio, const char *action, char *t
 */
 static int clibuart_write_data(FILE *fd, const char *buf)
 {
-	int ret = 0;
+    int ret = 0;
 
-	ret = fwrite(buf, 1, strlen(buf), fd);
-	if (ret != strlen(buf)) {
-		printf("Error during writing to file\n");
-		ret = -1;
-	}
-	else {
-		ret = 0;
-	}
+    ret = fwrite(buf, 1, strlen(buf), fd);
+    if (ret != strlen(buf)) {
+        printf("Error during writing to file\n");
+        ret = -1;
+    }
+    else {
+        ret = 0;
+    }
 
-	return ret;
+    return ret;
 }
 
 /**
@@ -682,23 +682,23 @@ static int clibuart_write_data(FILE *fd, const char *buf)
 */
 int clibuart_gpio_export(int num)
 {
-	FILE *fd = fopen(GPIO_EXPORT_PATH, "w");
-	char buf[5];
-	int ret;
+    FILE *fd = fopen(GPIO_EXPORT_PATH, "w");
+    char buf[5];
+    int ret;
 
-	if (!fd) {
-		printf("Error during opening file: %s\n", strerror(errno));
-		return -1;
-	}
+    if (!fd) {
+        printf("Error during opening file: %s\n", strerror(errno));
+        return -1;
+    }
 
-	snprintf(buf, sizeof(buf), "%d", num);
-	ret = clibuart_write_data(fd, buf);
-	if (ret)
-		goto err;
+    snprintf(buf, sizeof(buf), "%d", num);
+    ret = clibuart_write_data(fd, buf);
+    if (ret)
+        goto err;
 
 err:
-	fclose(fd);
-	return ret;
+    fclose(fd);
+    return ret;
 }
 
 /**
@@ -711,23 +711,23 @@ err:
 */
 int clibuart_gpio_unexport(int num)
 {
-	FILE *fd = fopen(GPIO_UNEXPORT_PATH, "w");
-	char buf[5];
-	int ret;
+    FILE *fd = fopen(GPIO_UNEXPORT_PATH, "w");
+    char buf[5];
+    int ret;
 
-	if (!fd) {
-		printf("Error during opening file: %s\n", strerror(errno));
-		return -1;
-	}
+    if (!fd) {
+        printf("Error during opening file: %s\n", strerror(errno));
+        return -1;
+    }
 
-	snprintf(buf, sizeof(buf), "%d", num);
-	ret = clibuart_write_data(fd, buf);
-	if (ret)
-		goto err;
+    snprintf(buf, sizeof(buf), "%d", num);
+    ret = clibuart_write_data(fd, buf);
+    if (ret)
+        goto err;
 
 err:
-	fclose(fd);
-	return ret;
+    fclose(fd);
+    return ret;
 }
 
 
@@ -742,33 +742,33 @@ err:
 */
 int clibuart_gpio_setDirection(int gpio, clibuart_gpio_direction dir)
 {
-	char path[50];
-	char buf[4];
-	FILE *fd = NULL;
-	int ret;
+    char path[50];
+    char buf[4];
+    FILE *fd = NULL;
+    int ret;
 
-	clibuart_setup_gpio_path(gpio, GPIO_DIRECTION_STR, path, sizeof(path));
+    clibuart_setup_gpio_path(gpio, GPIO_DIRECTION_STR, path, sizeof(path));
 
-	fd = fopen(path, "w");
+    fd = fopen(path, "w");
 
-	if (!fd) {
-		printf("Error during opening file (set direction): %s  %s\n", path, strerror(errno));
-		return -1;
-	}
-	if (dir == GPIO_DIRECTION_IN) {
-		strncpy(buf, GPIO_DIRECTION_IN_STR, sizeof(buf));
-	}
-	else if (dir == GPIO_DIRECTION_OUT) {
-		strncpy(buf, GPIO_DIRECTION_OUT_STR, sizeof(buf));
-	}
+    if (!fd) {
+        printf("Error during opening file (set direction): %s  %s\n", path, strerror(errno));
+        return -1;
+    }
+    if (dir == GPIO_DIRECTION_IN) {
+        strncpy(buf, GPIO_DIRECTION_IN_STR, sizeof(buf));
+    }
+    else if (dir == GPIO_DIRECTION_OUT) {
+        strncpy(buf, GPIO_DIRECTION_OUT_STR, sizeof(buf));
+    }
 
-	ret = clibuart_write_data(fd, buf);
-	if (ret)
-		goto err;
+    ret = clibuart_write_data(fd, buf);
+    if (ret)
+        goto err;
 
 err:
-	fclose(fd);
-	return ret;
+    fclose(fd);
+    return ret;
 }
 
 /**
@@ -781,39 +781,38 @@ err:
 */
 clibuart_gpio_direction clibuart_gpio_getDirection(int gpio)
 {
-	char path[50];
-	char buf[4];
-	FILE *fd = NULL;
-	int ret;
-	clibuart_gpio_direction dir;
+    char path[50];
+    char buf[4];
+    FILE *fd = NULL;
+    int ret;
+    clibuart_gpio_direction dir;
 
-	clibuart_setup_gpio_path(gpio, GPIO_DIRECTION_STR, path, sizeof(path));
+    clibuart_setup_gpio_path(gpio, GPIO_DIRECTION_STR, path, sizeof(path));
 
-	fd = fopen(path, "r");
+    fd = fopen(path, "r");
 
-	if (!fd) {
-		printf("Error during opening file (get direction): %s\n", strerror(errno));
-		return -1;
-	}
+    if (!fd) {
+        printf("Error during opening file (get direction): %s\n", strerror(errno));
+        return -1;
+    }
 
-	ret = fread(buf, 1, sizeof(buf), fd);
-	if (!ret) {
-		printf("Error during reading file\n");
-		ret = -1;
-		goto err;
-	}
+    ret = fread(buf, 1, sizeof(buf), fd);
+    if (!ret) {
+        printf("Error during reading file\n");
+        ret = -1;
+        goto err;
+    }
 
-	if (!strcmp(buf, GPIO_DIRECTION_IN_STR))
-		dir = GPIO_DIRECTION_IN;
-	else if (!strcmp(buf, GPIO_DIRECTION_OUT_STR))
-		dir = GPIO_DIRECTION_OUT;
+    if (!strcmp(buf, GPIO_DIRECTION_IN_STR))
+        dir = GPIO_DIRECTION_IN;
+    else if (!strcmp(buf, GPIO_DIRECTION_OUT_STR))
+        dir = GPIO_DIRECTION_OUT;
 
-	ret = 0;
+    ret = 0;
 
 err:
-	fclose(fd);
-	return ret;
-
+    fclose(fd);
+    return ret;
 }
 
 /**
@@ -827,28 +826,28 @@ err:
 */
 int clibuart_gpio_setValue(int gpio, int val)
 {
-	char path[50];
-	char buf[2];
-	FILE *fd = NULL;
-	int ret;
+    char path[50];
+    char buf[2];
+    FILE *fd = NULL;
+    int ret;
 
-	clibuart_setup_gpio_path(gpio, GPIO_VALUE_STR, path, sizeof(path));
+    clibuart_setup_gpio_path(gpio, GPIO_VALUE_STR, path, sizeof(path));
 
-	fd = fopen(path, "w");
+    fd = fopen(path, "w");
 
-	if (!fd) {
-		printf("Error during opening file: %s\n", strerror(errno));
-		return -1;
-	}
+    if (!fd) {
+        printf("Error during opening file: %s\n", strerror(errno));
+        return -1;
+    }
 
-	snprintf(buf, sizeof(buf), "%d", val);
-	ret = clibuart_write_data(fd, buf);
-	if (ret)
-		goto err;
+    snprintf(buf, sizeof(buf), "%d", val);
+    ret = clibuart_write_data(fd, buf);
+    if (ret)
+        goto err;
 
 err:
-	fclose(fd);
-	return ret;
+    fclose(fd);
+    return ret;
 }
 
 /**
@@ -860,32 +859,32 @@ err:
 */
 int clibuart_gpio_getValue(int gpio)
 {
-	char path[50];
-	char buf[2];
-	FILE *fd = NULL;
-	int ret;
+    char path[50];
+    char buf[2];
+    FILE *fd = NULL;
+    int ret;
 
-	clibuart_setup_gpio_path(gpio, GPIO_VALUE_STR, path, sizeof(path));
+    clibuart_setup_gpio_path(gpio, GPIO_VALUE_STR, path, sizeof(path));
 
-	fd = fopen(path, "r");
+    fd = fopen(path, "r");
 
-	if (!fd) {
-		printf("Error during opening file: %s\n", strerror(errno));
-		return -1;
-	}
+    if (!fd) {
+        printf("Error during opening file: %s\n", strerror(errno));
+        return -1;
+    }
 
-	ret = fread(buf, 1, sizeof(buf), fd);
-	if (!ret) {
-		printf("Error during reading file\n");
-		ret = -1;
-		goto err;
-	}
+    ret = fread(buf, 1, sizeof(buf), fd);
+    if (!ret) {
+        printf("Error during reading file\n");
+        ret = -1;
+        goto err;
+    }
 
-	ret = strtol(buf, NULL, 10);
+    ret = strtol(buf, NULL, 10);
 
 err:
-	fclose(fd);
-	return ret;
+    fclose(fd);
+    return ret;
 }
 
 /**
@@ -900,33 +899,33 @@ err:
 */
 int clibuart_gpio_setup(int gpio, clibuart_gpio_direction dir, int val)
 {
-	int ret;
+    int ret;
 
-	ret = clibuart_gpio_export(gpio);
-	if (ret)
-		return ret;
+    ret = clibuart_gpio_export(gpio);
+    if (ret)
+        return ret;
 
-	int i;
-	for (i = 1; i <= 10; i++) {
-	  ret = clibuart_gpio_setDirection(gpio, dir);
-	  if (!ret) {
-		printf("clibuart_gpio_setup() setDir success: %d\n", i);
-		break;
-	  }
-	  else {
-		printf("clibuart_gpio_setup() setDir failed wait for 100 ms to next try: %d\n", i);
-		SLEEP(100);
-	  }
-	}
+    int i;
+    for (i = 1; i <= 10; i++) {
+        ret = clibuart_gpio_setDirection(gpio, dir);
+        if (!ret) {
+            printf("clibuart_gpio_setup() setDir success: %d\n", i);
+            break;
+        }
+        else {
+            printf("clibuart_gpio_setup() setDir failed wait for 100 ms to next try: %d\n", i);
+            SLEEP(100);
+        }
+    }
 
-	// set gpio value when output clibspi_gpio_getDirection
-	if (dir == GPIO_DIRECTION_OUT) {
-		ret = clibuart_gpio_setValue(gpio, val);
-		if (ret)
-			return ret;
-	}
+    // set gpio value when output clibspi_gpio_getDirection
+    if (dir == GPIO_DIRECTION_OUT) {
+        ret = clibuart_gpio_setValue(gpio, val);
+        if (ret)
+            return ret;
+    }
 
-	return ret;
+    return ret;
 }
 
 /**
@@ -939,5 +938,5 @@ int clibuart_gpio_setup(int gpio, clibuart_gpio_direction dir, int val)
 */
 int clibuart_gpio_cleanup(int gpio)
 {
-	return (clibuart_gpio_unexport(gpio));
+    return (clibuart_gpio_unexport(gpio));
 }

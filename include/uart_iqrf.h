@@ -21,7 +21,7 @@
  * up on 'gpio' static library.
  *
  * @file		uart_iqrf.h
- * @date		11.9.2018
+ * @date		19.9.2018
  */
 
 #ifndef __UART_IQRF_H
@@ -43,26 +43,26 @@ extern "C" {
 
 /** IQRF uart Error constants. */
 typedef enum uart_iqrf_Errors {
-	///< An enum constant representing results without errors
-	BASE_TYPES_OPER_OK = 0,
-	///< An enum constant representing results where some error occures
-	BASE_TYPES_OPER_ERROR = -1,
-	///< An enum constant representing operation on not initialized library
-	BASE_TYPES_LIB_NOT_INITIALIZED = -2,
-	///< An enum constant representing the uart iqrf error CRC mismatch
-	UART_IQRF_ERROR_CRC = -10,       /* CRC mismatch */
-  ///< An enum constant representing the uart receiver timeout
-  UART_IQRF_ERROR_TIMEOUT = -11    /* receiver timeout */
+    ///< An enum constant representing results without errors
+    BASE_TYPES_OPER_OK = 0,
+    ///< An enum constant representing results where some error occures
+    BASE_TYPES_OPER_ERROR = -1,
+    ///< An enum constant representing operation on not initialized library
+    BASE_TYPES_LIB_NOT_INITIALIZED = -2,
+    ///< An enum constant representing the uart iqrf error CRC mismatch
+    UART_IQRF_ERROR_CRC = -10,       /* CRC mismatch */
+    ///< An enum constant representing the uart receiver timeout
+    UART_IQRF_ERROR_TIMEOUT = -11    /* receiver timeout */
 } uqrt_iqrf_Errors;
 
 typedef struct
 {
-  /** Device file name*/
-  char uartDev[UART_DEV_CAPACITY+1];
-  int baudRate;
-  int8_t enableGpioPin;
-  int8_t spiMasterEnGpioPin;
-  int8_t spiPgmSwGpioPin;
+    /** Device file name*/
+    char uartDev[UART_DEV_CAPACITY+1];
+    int baudRate;
+    int8_t powerEnableGpioPin;
+    int8_t busEnableGpioPin;
+    int8_t pgmSwitchGpioPin;
 } T_UART_IQRF_CONFIG_STRUCT;
 
 /**

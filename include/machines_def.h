@@ -34,18 +34,18 @@
 
 #ifdef UNI_PI
     /** PGM Switch GPIO. */
-    #define PGM_SW_GPIO (-1)
-    /** SPI master enable GPIO. */
-    #define SPI_MASTER_EN_GPIO (-1)
-    /** Enable GPIO. */
-    #define ENABLE_GPIO (18)
+    #define PGM_SWITCH_GPIO (-1)
+    /** Bus enable GPIO. */
+    #define BUS_ENABLE_GPIO (-1)
+    /** Power enable GPIO. */
+    #define POWER_ENABLE_GPIO (18)
 #else
     /** PGM Switch GPIO. */
-    #define PGM_SW_GPIO (22)
-    /** SPI master enable GPIO. */
-    #define SPI_MASTER_EN_GPIO (7)
-    /** Enable GPIO. */
-    #define ENABLE_GPIO (23)
+    #define PGM_SWITCH_GPIO (22)
+    /** Bus enable GPIO. */
+    #define BUS_ENABLE_GPIO (7)
+    /** Power enable GPIO. */
+    #define POWER_ENABLE_GPIO (23)
 #endif
 
 #define UART_IQRF_DEFAULT_SPEED  B57600
@@ -68,16 +68,16 @@
 /* !!! if GPIO pin is not implemented, define it as -1 */
 
 /** PGM Switch GPIO. */
-#define PGM_SW_GPIO (22)
-/** SPI master enable GPIO. */
-#define SPI_MASTER_EN_GPIO (7)
-/** Enable GPIO. */
-#define ENABLE_GPIO (23)
+#define PGM_SWITCH_GPIO (22)
+/** Bus enable GPIO. */
+#define BUS_ENABLE_GPIO (7)
+/** Power enable GPIO. */
+#define POWER_ENABLE_GPIO (23)
 
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
 #ifndef UART_IQRF_DEFAULT_DEVICE
-  	#define UART_IQRF_DEFAULT_DEVICE ""
+    #define UART_IQRF_DEFAULT_DEVICE ""
 #endif
 
 #endif /* UP */
@@ -88,16 +88,16 @@
 /* !!! if GPIO pin is not implemented, define it as -1 */
 
 /** PGM Switch GPIO. */
-#define PGM_SW_GPIO (22)
-/** SPI master enable GPIO. */
-#define SPI_MASTER_EN_GPIO (7)
-/** Enable GPIO. */
-#define ENABLE_GPIO (23)
+#define PGM_SWITCH_GPIO (22)
+/** Bus enable GPIO. */
+#define BUS_ENABLE_GPIO (7)
+/** Power enable GPIO. */
+#define POWER_ENABLE_GPIO (23)
 
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
 #ifndef UART_IQRF_DEFAULT_DEVICE
-  	#define UART_IQRF_DEFAULT_DEVICE ""
+    #define UART_IQRF_DEFAULT_DEVICE ""
 #endif
 
 #endif /* UP2 */
@@ -108,16 +108,16 @@
 /* !!! if GPIO pin is not implemented, define it as -1 */
 
 /** PGM Switch GPIO. */
-#define PGM_SW_GPIO (3)
-/** SPI master enable GPIO. */
-#define SPI_MASTER_EN_GPIO (10)
-/** Enable GPIO. */
-#define ENABLE_GPIO (19)
+#define PGM_SWITCH_GPIO (3)
+/** Bus enable GPIO. */
+#define BUS_ENABLE_GPIO (10)
+/** Power enable GPIO. */
+#define POWER_ENABLE_GPIO (19)
 
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
 #ifndef UART_IQRF_DEFAULT_DEVICE
-  	#define UART_IQRF_DEFAULT_DEVICE ""
+    #define UART_IQRF_DEFAULT_DEVICE ""
 #endif
 
 #endif /* OPI */
