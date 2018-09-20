@@ -177,9 +177,9 @@ int open_communication(void)
 
     strcpy (myUartIqrfConfig.uartDev, UART_IQRF_DEFAULT_DEVICE);
     myUartIqrfConfig.baudRate = UART_IQRF_DEFAULT_SPEED;
-    myUartIqrfConfig.enableGpioPin = ENABLE_GPIO;
-    myUartIqrfConfig.spiMasterEnGpioPin = SPI_MASTER_EN_GPIO;
-    myUartIqrfConfig.spiPgmSwGpioPin = PGM_SW_GPIO;
+    myUartIqrfConfig.powerEnableGpioPin = POWER_ENABLE_GPIO;
+    myUartIqrfConfig.busEnableGpioPin = BUS_ENABLE_GPIO;
+    myUartIqrfConfig.pgmSwitchGpioPin = PGM_SWITCH_GPIO;
 
     operResult = uart_iqrf_init(&myUartIqrfConfig);
     if (operResult < 0) {
@@ -385,22 +385,22 @@ void empty_rx_buffer(void)
  */
 uint16_t dpa_get_estimated_timeout(void)
 {
-  uint16_t responseTimeSlotLength;
-  uint16_t estimatedTimeout = (uint16_t) (dpaResponsePacket.Response.DpaMessage.IFaceConfirmation.Hops + 1) * (uint16_t) dpaResponsePacket.Response.DpaMessage.IFaceConfirmation.TimeSlotLength * 10;
-  // DPA in diagnostic mode
-  if (dpaResponsePacket.Response.DpaMessage.IFaceConfirmation.TimeSlotLength == 20) {
-    responseTimeSlotLength = 200;
-  }
-  else {
-    if (dpaResponsePacket.Response.DpaMessage.IFaceConfirmation.TimeSlotLength > 6) {
-      // DPA in LP mode
-      responseTimeSlotLength = 110;
+    uint16_t responseTimeSlotLength;
+    uint16_t estimatedTimeout = (uint16_t) (dpaResponsePacket.Response.DpaMessage.IFaceConfirmation.Hops + 1) * (uint16_t) dpaResponsePacket.Response.DpaMessage.IFaceConfirmation.TimeSlotLength * 10;
+    // DPA in diagnostic mode
+    if (dpaResponsePacket.Response.DpaMessage.IFaceConfirmation.TimeSlotLength == 20) {
+        responseTimeSlotLength = 200;
     }
     else {
-      // DPA in STD mode
-      responseTimeSlotLength = 60;
+        if (dpaResponsePacket.Response.DpaMessage.IFaceConfirmation.TimeSlotLength > 6) {
+            // DPA in LP mode
+            responseTimeSlotLength = 110;
+        }
+        else {
+            // DPA in STD mode
+            responseTimeSlotLength = 60;
+        }
     }
-  }
-  estimatedTimeout += ((uint16_t) (dpaResponsePacket.Response.DpaMessage.IFaceConfirmation.HopsResponse + 1) * responseTimeSlotLength + 40 + 100);
-  return(estimatedTimeout);
+    estimatedTimeout += ((uint16_t) (dpaResponsePacket.Response.DpaMessage.IFaceConfirmation.HopsResponse + 1) * responseTimeSlotLength + 40 + 100);
+    return(estimatedTimeout);
 }
