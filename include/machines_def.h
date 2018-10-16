@@ -77,7 +77,7 @@
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
 #ifndef UART_IQRF_DEFAULT_DEVICE
-    #define UART_IQRF_DEFAULT_DEVICE ""
+    #define UART_IQRF_DEFAULT_DEVICE "/dev/ttyS1"
 #endif
 
 #endif /* UP */
@@ -97,7 +97,7 @@
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
 #ifndef UART_IQRF_DEFAULT_DEVICE
-    #define UART_IQRF_DEFAULT_DEVICE ""
+    #define UART_IQRF_DEFAULT_DEVICE "/dev/ttyS1"
 #endif
 
 #endif /* UP2 */
@@ -117,7 +117,7 @@
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
 #ifndef UART_IQRF_DEFAULT_DEVICE
-    #define UART_IQRF_DEFAULT_DEVICE ""
+    #define UART_IQRF_DEFAULT_DEVICE "/dev/ttyS0"
 #endif
 
 #endif /* OPI */

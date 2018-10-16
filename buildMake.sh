@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script for building clibspi on Linux machine
+# Script for building clibuart on Linux machine
 
 set -e
 project=clibuart

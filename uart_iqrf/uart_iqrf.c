@@ -15,6 +15,15 @@
  * limitations under the License.
  */
 
+ /**
+  * clibuart library serves as an programming interface for communication
+  * between Linux system and TR modules using UART and IO.
+  *
+  * @file   uart_iqrf.c
+  * @date   16.10.2018
+  * @ver    1.0.1
+  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -101,7 +110,7 @@ static uint64_t get_ms_ts()
 #define GPIO_DIRECTION_STR "direction"
 #define GPIO_VALUE_STR "value"
 
-/* gpio clibspi_gpio_getDirection state */
+/* gpio clibuart_gpio_getDirection state */
 #define GPIO_DIRECTION_IN_STR "in"
 #define GPIO_DIRECTION_OUT_STR "out"
 
@@ -124,6 +133,7 @@ typedef struct {
 T_UART_SEND_CTRL senderControl;
 
 typedef struct {
+    uint8_t *receiveBuffer;
     uint8_t packetCnt;
     uint8_t CRC;
     uint8_t decodeInProgress;
@@ -152,7 +162,7 @@ static int libIsInitialized = 0;
 /** File descriptor of the device special file. */
 static int fd = -1;
 
-/** pointer to actual spi iqrf configuration structure */
+/** pointer to actual uart iqrf configuration structure */
 static T_UART_IQRF_CONFIG_STRUCT *uartIqrfConfig = NULL;
 
 /************************************/
@@ -250,14 +260,19 @@ uint8_t write_byte_to_buffer(uint8_t *dataBuffer, uint8_t dataByte)
 */
 int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *configStruct)
 {
-
     if (libIsInitialized == 1) {
+        return BASE_TYPES_OPER_ERROR;
+    }
+
+    // allocate memory for received data
+    receiverControl.receiveBuffer = malloc(SIZE_OF_UART_RX_BUFFER * sizeof(uint8_t));
+    if (receiverControl.receiveBuffer == NULL) {
         return BASE_TYPES_OPER_ERROR;
     }
 
     uartIqrfConfig = (T_UART_IQRF_CONFIG_STRUCT *)configStruct;
 
-    // Initialize PGM SW pin, SPI master enable pin & power enable
+    // Initialize PGM SW pin, bus enable pin & power enable
     if (uartIqrfConfig->pgmSwitchGpioPin != -1) {
         clibuart_gpio_setup(uartIqrfConfig->pgmSwitchGpioPin, GPIO_DIRECTION_OUT, 0);
     }
@@ -301,6 +316,9 @@ int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *configStruct)
         if (uartIqrfConfig->pgmSwitchGpioPin != -1) {
             clibuart_gpio_cleanup(uartIqrfConfig->pgmSwitchGpioPin);
         }
+
+        free(receiverControl.receiveBuffer);
+
         return BASE_TYPES_OPER_ERROR;
     }
 }
@@ -385,35 +403,33 @@ int uart_iqrf_write(uint8_t *dataToWrite, unsigned int dataLen)
 * @param	timeout		- the time I wait for the packet to be received (in ms)
 *
 * @return	@c BASE_TYPES_OPER_ERROR = error occures during read operation
-* @return	@c BASE_TYPES_LIB_NOT_INITIALIZED = SPI library is not initialized
+* @return	@c BASE_TYPES_LIB_NOT_INITIALIZED = UART library is not initialized
 * @return	@c BASE_TYPES_OPER_OK = data were successfully read
 * @return	@c UART_IQRF_ERROR_CRC = mismatched CRC
 * @return	@c UART_IQRF_ERROR_TIMEOUT = receiver timeout (no data read)
 */
 int uart_iqrf_read(uint8_t *readBuffer, uint8_t *dataLen, unsigned int timeout)
 {
-    uint8_t *receiveBuffer = NULL;
     uint64_t start;
     uint8_t inputChar;
     int rlen;
 
-    if (libIsInitialized == 0) {
-        return BASE_TYPES_LIB_NOT_INITIALIZED;
-    }
-
-    if (fd < 0) {
+    // checking input parameter
+    if (dataLen == NULL) {
         return BASE_TYPES_OPER_ERROR;
     }
+    else {
+        *dataLen = 0;
+    }
 
-    // checking input parameters
+    // checking input parameter
     if (readBuffer == NULL) {
         return BASE_TYPES_OPER_ERROR;
     }
 
-    // allocate memory for received data
-    receiveBuffer = malloc(SIZE_OF_UART_RX_BUFFER * sizeof(uint8_t));
-    if (receiveBuffer == NULL) {
-        return BASE_TYPES_OPER_ERROR;
+    // checking if library is initialized
+    if (libIsInitialized == 0) {
+        return BASE_TYPES_LIB_NOT_INITIALIZED;
     }
 
     receiverControl.decodeInProgress = 0;
@@ -421,16 +437,15 @@ int uart_iqrf_read(uint8_t *readBuffer, uint8_t *dataLen, unsigned int timeout)
     start = get_ms_ts();
     while (1) {
 
-        rlen = read(fd, receiveBuffer, SIZE_OF_UART_RX_BUFFER - 1);
+        rlen = read(fd, receiverControl.receiveBuffer, SIZE_OF_UART_RX_BUFFER - 1);
 
         receiverControl.rBuffCnt = 0;
         while (rlen--) {
-            inputChar = receiveBuffer[receiverControl.rBuffCnt++];
+            inputChar = receiverControl.receiveBuffer[receiverControl.rBuffCnt++];
 
             if (receiverControl.decodeInProgress) {
                 // end of packet or DPA structure is full
                 if (inputChar == HDLC_FRM_FLAG_SEQUENCE || receiverControl.packetCnt >= 70) {
-                    free(receiveBuffer);
                     if (receiverControl.CRC == 0) {
                         *dataLen = receiverControl.packetCnt - 1;
                         return(BASE_TYPES_OPER_OK);
@@ -488,8 +503,6 @@ int uart_iqrf_read(uint8_t *readBuffer, uint8_t *dataLen, unsigned int timeout)
             }
         }
     }
-
-    free(receiveBuffer);
 
     return (UART_IQRF_ERROR_TIMEOUT);
 }
@@ -600,13 +613,12 @@ int uart_iqrf_close(void)
 * Destroys IQRF UART library object and releases UART port
 *
 *
-* @return	@c BASE_TYPES_OPER_ERROR = error occures during SPI destroy operation
+* @return	@c BASE_TYPES_OPER_ERROR = error occures during UART destroy operation
 * @return	@c BASE_TYPES_LIB_NOT_INITIALIZED = UART library is not initialized
 * @return	@c BASE_TYPES_OPER_OK = UART channel was successfully closed
 */
 int uart_iqrf_destroy(void)
 {
-
     if (libIsInitialized == 0) {
         return BASE_TYPES_LIB_NOT_INITIALIZED;
     }
@@ -625,6 +637,9 @@ int uart_iqrf_destroy(void)
     if (uartIqrfConfig->pgmSwitchGpioPin != -1) {
         clibuart_gpio_cleanup(uartIqrfConfig->pgmSwitchGpioPin);
     }
+
+    // dealocate receive buffer
+    free(receiverControl.receiveBuffer);
 
     return uart_iqrf_close();
 }
@@ -918,7 +933,7 @@ int clibuart_gpio_setup(int gpio, clibuart_gpio_direction dir, int val)
         }
     }
 
-    // set gpio value when output clibspi_gpio_getDirection
+    // set gpio value when output clibuart_gpio_getDirection
     if (dir == GPIO_DIRECTION_OUT) {
         ret = clibuart_gpio_setValue(gpio, val);
         if (ret)
