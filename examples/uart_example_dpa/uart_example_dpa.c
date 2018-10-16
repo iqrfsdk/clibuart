@@ -101,7 +101,7 @@ T_UART_IQRF_CONFIG_STRUCT myUartIqrfConfig;
 /**
  * Main entry-point for this application.
  *
- * @return	Exit-code for the process - 0 for success, else an error code.
+ * @return  Exit-code for the process - 0 for success, else an error code.
  */
 int main(void)
 {
@@ -153,11 +153,11 @@ int main(void)
 
 /**
  * Prints specified user message and specified error description to standard output, cleans up
- * the Rpi_spi_iqrf library, and exits the program with specified return gpio_getValue.
+ * the Rpi_uart_iqrf library, and exits the program with specified return gpio_getValue.
  *
- * @param	userMessage	Message describing the error.
- * @param	error	   	The error identificator.
- * @param	retValue   	The returned value.
+ * @param	userMessage   Message describing the error.
+ * @param	error         The error identificator.
+ * @param	retValue      The returned value.
  */
 void print_error_and_exit(const char *userMessage, int error, int retValue)
 {
@@ -167,9 +167,9 @@ void print_error_and_exit(const char *userMessage, int error, int retValue)
 }
 
 /**
- * Opens SPI communication.
+ * Opens UART communication.
  *
- * @return	0 for success.
+ * @return  0 for success.
  */
 int open_communication(void)
 {
@@ -195,7 +195,7 @@ int open_communication(void)
 /**
  * Closes the IQRF communication.
  *
- * @return	0 for success, -1 if communication is already closed.
+ * @return  0 for success, -1 if communication is already closed.
  */
 int close_communication(void)
 {
@@ -212,8 +212,8 @@ int close_communication(void)
 /**
  * Pulse with LED selected by @c color on address defined by @c address.
  *
- * @param	address	The address of the destination module.
- * @param	color  	Color of the LED on module.
+ * @param	address   The address of the destination module.
+ * @param	color     Color of the LED on module.
  */
 void pulse_led(uint16_t address, LedColor_t color)
 {
@@ -234,10 +234,10 @@ void pulse_led(uint16_t address, LedColor_t color)
 /**
  * Executes the DPA command operation.
  *
- * @param	dpaMessage	DPA message to be executed.
- * @param	dataLen   	Length of the message.
+ * @param	dpaMessage  DPA message to be executed.
+ * @param	dataLen     Length of the message.
  *
- * @return	0 for success, in case of error, the app is closed.
+ * @return  0 for success, in case of error, the app is closed.
  */
 int execute_dpa_command(const uint8_t *dpaMessage, int dataLen)
 {
@@ -343,8 +343,8 @@ int execute_dpa_command(const uint8_t *dpaMessage, int dataLen)
 /**
  * Prints specified data onto standard output in hex format.
  *
- * @param [in,out]	data	Pointer to data buffer.
- * @param	length			The length of the data.
+ * @param [in,out]    data  Pointer to data buffer.
+ * @param	length      The length of the data.
  */
 void print_data_in_hex(unsigned char *data, unsigned int length)
 {

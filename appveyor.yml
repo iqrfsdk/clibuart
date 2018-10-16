@@ -9,7 +9,7 @@ image: Visual Studio 2015
 init:
   - git config --global core.autocrlf input
 
-clone_folder: c:\projects\clibspi
+clone_folder: c:\projects\clibuart
 
 platform:
   - x86

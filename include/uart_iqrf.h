@@ -16,12 +16,12 @@
  */
 
 /**
- * spi_iqrf library serves as an programming interface for communication
- * between Linux system and TR modules using SPI and IO. IO functionality is build
- * up on 'gpio' static library.
+ * clibuart library serves as an programming interface for communication
+ * between Linux system and TR modules using UART and IO.
  *
- * @file		uart_iqrf.h
- * @date		19.9.2018
+ * @file    uart_iqrf.h
+ * @date    16.10.2018
+ * @ver     1.0.1
  */
 
 #ifndef __UART_IQRF_H
@@ -95,7 +95,7 @@ UART_IQRF_DECLSPEC int uart_iqrf_write(uint8_t *dataToWrite, unsigned int dataLe
 * @param	timeout		- the time I wait for the packet to be received (in ms)
 *
 * @return	@c BASE_TYPES_OPER_ERROR = error occures during read operation
-* @return	@c BASE_TYPES_LIB_NOT_INITIALIZED = SPI library is not initialized
+* @return	@c BASE_TYPES_LIB_NOT_INITIALIZED = UART library is not initialized
 * @return	@c BASE_TYPES_OPER_OK = data were successfully read
 * @return	@c UART_IQRF_ERROR_CRC = mismatched CRC
 * @return	@c UART_IQRF_ERROR_TIMEOUT = receiver timeout (no data read)
