@@ -29,12 +29,10 @@
 #include "DPA.h"
 
 /** Defines whole DPA message. */
-typedef union
-{
+typedef union {
     uint8_t Buffer[64];
 
-    struct
-    {
+    struct {
         uint16_t NADR;
         uint8_t PNUM;
         uint8_t PCMD;
@@ -44,8 +42,7 @@ typedef union
         TDpaMessage DpaMessage;
     } Response;
 
-    struct
-    {
+    struct {
         uint16_t NADR;
         uint8_t PNUM;
         uint8_t PCMD;
@@ -55,8 +52,7 @@ typedef union
 } T_DPA_PACKET;
 
 /** Defines an alias representing the LED colors. */
-typedef enum _LedColor_t
-{
+typedef enum _LedColor_t {
     Red,
     Green
 } LedColor_t;
@@ -65,7 +61,7 @@ typedef enum _LedColor_t
 /* Private constants                */
 /************************************/
 
-/** Time interval between DPA messagess controls LEDs. */
+/** Time interval between DPA messages controls LEDs. */
 const unsigned long TIME_BETWEEN_LEDS_MS = 2000;
 
 /************************************/
@@ -221,12 +217,10 @@ void pulse_led(uint16_t address, LedColor_t color)
     message.Request.NADR = address;
     message.Request.HWPID = HWPID_DoNotCheck;
     message.Request.PCMD = CMD_LED_PULSE;
-    if (color == Red) {
+    if (color == Red)
         message.Request.PNUM = PNUM_LEDR;
-    }
-    else {
+    else
         message.Request.PNUM = PNUM_LEDG;
-    }
 
     execute_dpa_command((const uint8_t *)&message.Buffer, sizeof(TDpaIFaceHeader));
 }
@@ -259,18 +253,18 @@ int execute_dpa_command(const uint8_t *dpaMessage, int dataLen)
 
     // sending some data to TR module
     operResult = uart_iqrf_write((uint8_t *)dpaMessage, dataLen);
-    if (operResult) {
+    if (operResult)
         print_error_and_exit("Error during data sending", 0, operResult);
-    }
     printf("Data successfully sent to UART device.\n\r");
 
     operationInProgress = 1;
     rxTimeout = 500;
 
-    if ((((T_DPA_PACKET *)dpaMessage)->Request.NADR == COORDINATOR_ADDRESS) || (((T_DPA_PACKET *)dpaMessage)->Request.NADR == LOCAL_ADDRESS)) {
+    if ((((T_DPA_PACKET *)dpaMessage)->Request.NADR == COORDINATOR_ADDRESS)
+        || (((T_DPA_PACKET *)dpaMessage)->Request.NADR == LOCAL_ADDRESS))
+    {
         crSm = PROCESS_RESPONSE;
-    }
-    else {
+    } else {
         crSm = PROCESS_CONFIMATION;
     }
 
@@ -280,59 +274,45 @@ int execute_dpa_command(const uint8_t *dpaMessage, int dataLen)
         operResult = uart_iqrf_read((uint8_t *)&dpaResponsePacket, &rxDataLen, rxTimeout);
 
         switch (crSm) {
-            case PROCESS_CONFIMATION: {
-                if (operResult == BASE_TYPES_OPER_OK) {
-                    printf("Received confirmation data:\n\r");
-                    print_data_in_hex((unsigned char *)&dpaResponsePacket, rxDataLen);
-                    if (dpaResponsePacket.Response.ResponseCode == STATUS_CONFIRMATION) {
-                        printf("Confirmation OK.\n\r");
-                        if (((T_DPA_PACKET *)dpaMessage)->Request.NADR == BROADCAST_ADDRESS) {
-                            SLEEP(dpa_get_estimated_timeout());
-                            operationInProgress = 0;
-                        }
-                        else {
-                            rxTimeout = dpa_get_estimated_timeout();
-                        }
+        case PROCESS_CONFIMATION:
+            if (operResult == BASE_TYPES_OPER_OK) {
+                printf("Received confirmation data:\n\r");
+                print_data_in_hex((unsigned char *)&dpaResponsePacket, rxDataLen);
+                if (dpaResponsePacket.Response.ResponseCode == STATUS_CONFIRMATION) {
+                    printf("Confirmation OK.\n\r");
+                    if (((T_DPA_PACKET *)dpaMessage)->Request.NADR == BROADCAST_ADDRESS) {
+                        SLEEP(dpa_get_estimated_timeout());
+                        operationInProgress = 0;
+                    } else {
+                        rxTimeout = dpa_get_estimated_timeout();
                     }
-                    else {
-                        printf("Confirmation ERROR.\n\r");
-                    }
+                } else {
+                    printf("Confirmation ERROR.\n\r");
                 }
-                else {
-                    if (operResult == UART_IQRF_ERROR_TIMEOUT) {
-                        printf("Confirmation TIMEOUT.\n\r");
-                    }
-                    else {
-                        printf("Confirmation ERROR.\n\r");
-                    }
-                }
-
-                crSm = PROCESS_RESPONSE;
+            } else {
+                if (operResult == UART_IQRF_ERROR_TIMEOUT)
+                    printf("Confirmation TIMEOUT.\n\r");
+                else
+                    printf("Confirmation ERROR.\n\r");
             }
+            crSm = PROCESS_RESPONSE;
             break;
 
-            case PROCESS_RESPONSE: {
-                if (operResult == BASE_TYPES_OPER_OK) {
-                    printf("Received response data:\n\r");
-                    print_data_in_hex((unsigned char *)&dpaResponsePacket, rxDataLen);
-                    if (dpaResponsePacket.Response.ResponseCode == STATUS_NO_ERROR) {
-                        printf("Response OK.\n\r");
-                    }
-                    else {
-                        printf("Response ERROR.\n\r");
-                    }
-                }
-                else {
-                    if (operResult == UART_IQRF_ERROR_TIMEOUT) {
-                        printf("Response TIMEOUT.\n\r");
-                    }
-                    else {
-                        printf("Response ERROR.\n\r");
-                    }
-                }
-
-                operationInProgress = 0;
+        case PROCESS_RESPONSE:
+            if (operResult == BASE_TYPES_OPER_OK) {
+                printf("Received response data:\n\r");
+                print_data_in_hex((unsigned char *)&dpaResponsePacket, rxDataLen);
+                if (dpaResponsePacket.Response.ResponseCode == STATUS_NO_ERROR)
+                    printf("Response OK.\n\r");
+                else
+                    printf("Response ERROR.\n\r");
+            } else {
+                if (operResult == UART_IQRF_ERROR_TIMEOUT)
+                    printf("Response TIMEOUT.\n\r");
+                else
+                    printf("Response ERROR.\n\r");
             }
+            operationInProgress = 0;
             break;
         }
     }
@@ -353,9 +333,8 @@ void print_data_in_hex(unsigned char *data, unsigned int length)
     for (i = 0; i < length; i++) {
         printf("0x%.2x", (int) *data);
         data++;
-        if (i != (length - 1)) {
+        if (i != (length - 1))
             printf(" ");
-        }
     }
     printf("\n\r");
 }
@@ -371,16 +350,15 @@ void empty_rx_buffer(void)
     uint8_t rxDataBuffer[UART_IQRF_MAX_DATA_LENGTH];
 
     cnt = 5;
-    while (cnt){
+    while (cnt) {
         operResult = uart_iqrf_read(rxDataBuffer, &rxDataLen, 100);
-        if (operResult == UART_IQRF_ERROR_TIMEOUT) {
+        if (operResult == UART_IQRF_ERROR_TIMEOUT)
             cnt--;
-        }
     }
 }
 
 /**
- * Returns estimated timeout for response packet in miliseconds
+ * Returns estimated timeout for response packet in milliseconds
  * @return Estimated timeout for response packet in ms (computed from confirmation packet data)
  */
 uint16_t dpa_get_estimated_timeout(void)
@@ -390,13 +368,11 @@ uint16_t dpa_get_estimated_timeout(void)
     // DPA in diagnostic mode
     if (dpaResponsePacket.Response.DpaMessage.IFaceConfirmation.TimeSlotLength == 20) {
         responseTimeSlotLength = 200;
-    }
-    else {
+    } else {
         if (dpaResponsePacket.Response.DpaMessage.IFaceConfirmation.TimeSlotLength > 6) {
             // DPA in LP mode
             responseTimeSlotLength = 110;
-        }
-        else {
+        } else {
             // DPA in STD mode
             responseTimeSlotLength = 60;
         }
