@@ -20,8 +20,8 @@
  * between Linux system and TR modules using UART and IO.
  *
  * @file    uart_iqrf.h
- * @date    16.10.2018
- * @ver     1.0.1
+ * @date    07.12.2018
+ * @ver     1.0.2
  */
 
 #ifndef __UART_IQRF_H
@@ -45,7 +45,7 @@ extern "C" {
 typedef enum uart_iqrf_Errors {
     ///< An enum constant representing results without errors
     BASE_TYPES_OPER_OK = 0,
-    ///< An enum constant representing results where some error occures
+    ///< An enum constant representing results where some error occurs
     BASE_TYPES_OPER_ERROR = -1,
     ///< An enum constant representing operation on not initialized library
     BASE_TYPES_LIB_NOT_INITIALIZED = -2,
@@ -55,8 +55,7 @@ typedef enum uart_iqrf_Errors {
     UART_IQRF_ERROR_TIMEOUT = -11    /* receiver timeout */
 } uqrt_iqrf_Errors;
 
-typedef struct
-{
+typedef struct {
     /** Device file name*/
     char uartDev[UART_DEV_CAPACITY+1];
     int baudRate;
@@ -81,7 +80,7 @@ UART_IQRF_DECLSPEC int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *configStr
 * @param	dataToWrite	- data to be written to TR module
 * @param	dataLen		- length (in bytes) of the data
 *
-* @return	@c BASE_TYPES_OPER_ERROR = error occures during write operation
+* @return	@c BASE_TYPES_OPER_ERROR = error occurs during write operation
 * @return	@c BASE_TYPES_LIB_NOT_INITIALIZED = uart library is not initialized
 * @return	@c BASE_TYPES_OPER_OK = data was successfully written
 */
@@ -94,7 +93,7 @@ UART_IQRF_DECLSPEC int uart_iqrf_write(uint8_t *dataToWrite, unsigned int dataLe
 * @param	dataLen		- length of received packet (in bytes)
 * @param	timeout		- the time I wait for the packet to be received (in ms)
 *
-* @return	@c BASE_TYPES_OPER_ERROR = error occures during read operation
+* @return	@c BASE_TYPES_OPER_ERROR = error occurs during read operation
 * @return	@c BASE_TYPES_LIB_NOT_INITIALIZED = UART library is not initialized
 * @return	@c BASE_TYPES_OPER_OK = data were successfully read
 * @return	@c UART_IQRF_ERROR_CRC = mismatched CRC

@@ -20,8 +20,8 @@
   * between Linux system and TR modules using UART and IO.
   *
   * @file   uart_iqrf.c
-  * @date   16.10.2018
-  * @ver    1.0.1
+  * @date   07.12.2018
+  * @ver    1.0.2
   */
 
 #include <stdio.h>
@@ -193,13 +193,11 @@ int clibuart_gpio_cleanup(int gpio);
  */
 static int check_data_len(unsigned int dataLen)
 {
-    if (dataLen <= 0) {
+    if (dataLen <= 0)
         return BASE_TYPES_OPER_ERROR;
-    }
 
-    if (dataLen > UART_IQRF_MAX_DATA_LENGTH) {
+    if (dataLen > UART_IQRF_MAX_DATA_LENGTH)
         return BASE_TYPES_OPER_ERROR;
-    }
 
     return BASE_TYPES_OPER_OK;
 }
@@ -215,20 +213,18 @@ uint8_t dpa_do_CRC8(uint8_t inData, uint8_t seed)
     uint8_t bitsLeft;
 
     for (bitsLeft = 8; bitsLeft > 0; bitsLeft--) {
-        if (((seed ^ inData) & 0x01) == 0) {
+        if (((seed ^ inData) & 0x01) == 0)
             seed >>= 1;
-        }
-        else {
+        else
             seed = (seed >>= 1)^0x8C;
-        }
         inData >>= 1;
     }
-    return seed;
+    return (seed);
 }
 
 
 /**
- * write data byte to to buffer for TR module + make HDLC byte stuffing and comute CRC
+ * write data byte to to buffer for TR module + make HDLC byte stuffing and compute CRC
  * @param *dataBuffer Pointer to position in output buffer for TR module
  * @param dataByte Data byte for TR module
  *
@@ -260,25 +256,21 @@ uint8_t write_byte_to_buffer(uint8_t *dataBuffer, uint8_t dataByte)
 */
 int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *configStruct)
 {
-    if (libIsInitialized == 1) {
+    if (libIsInitialized == 1)
         return BASE_TYPES_OPER_ERROR;
-    }
 
     // allocate memory for received data
     receiverControl.receiveBuffer = malloc(SIZE_OF_UART_RX_BUFFER * sizeof(uint8_t));
-    if (receiverControl.receiveBuffer == NULL) {
+    if (receiverControl.receiveBuffer == NULL)
         return BASE_TYPES_OPER_ERROR;
-    }
 
     uartIqrfConfig = (T_UART_IQRF_CONFIG_STRUCT *)configStruct;
 
     // Initialize PGM SW pin, bus enable pin & power enable
-    if (uartIqrfConfig->pgmSwitchGpioPin != -1) {
+    if (uartIqrfConfig->pgmSwitchGpioPin != -1)
         clibuart_gpio_setup(uartIqrfConfig->pgmSwitchGpioPin, GPIO_DIRECTION_OUT, 0);
-    }
-    if (uartIqrfConfig->powerEnableGpioPin != -1) {
+    if (uartIqrfConfig->powerEnableGpioPin != -1)
         clibuart_gpio_setup(uartIqrfConfig->powerEnableGpioPin, GPIO_DIRECTION_OUT, 1);
-    }
     if (uartIqrfConfig->busEnableGpioPin != -1) {
         clibuart_gpio_setup(uartIqrfConfig->busEnableGpioPin, GPIO_DIRECTION_OUT, 0);
         SLEEP(1);
@@ -295,27 +287,22 @@ int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *configStruct)
         SLEEP(1);
     }
 
-    if (uartIqrfConfig->busEnableGpioPin != -1) {
+    if (uartIqrfConfig->busEnableGpioPin != -1)
         clibuart_gpio_setValue(uartIqrfConfig->busEnableGpioPin, 1);
-    }
 
     // Sleep for 500ms (in this time TR module waits for sequence to switch to programming mode)
     SLEEP(500);
 
-    if (uart_iqrf_open() == BASE_TYPES_OPER_OK){
+    if (uart_iqrf_open() == BASE_TYPES_OPER_OK) {
         libIsInitialized = 1;
         return BASE_TYPES_OPER_OK;
-    }
-    else {
-        if (uartIqrfConfig->powerEnableGpioPin != -1) {
+    } else {
+        if (uartIqrfConfig->powerEnableGpioPin != -1)
             clibuart_gpio_cleanup(uartIqrfConfig->powerEnableGpioPin);
-        }
-        if (uartIqrfConfig->busEnableGpioPin != -1) {
+        if (uartIqrfConfig->busEnableGpioPin != -1)
             clibuart_gpio_cleanup(uartIqrfConfig->busEnableGpioPin);
-        }
-        if (uartIqrfConfig->pgmSwitchGpioPin != -1) {
+        if (uartIqrfConfig->pgmSwitchGpioPin != -1)
             clibuart_gpio_cleanup(uartIqrfConfig->pgmSwitchGpioPin);
-        }
 
         free(receiverControl.receiveBuffer);
 
@@ -338,27 +325,22 @@ int uart_iqrf_write(uint8_t *dataToWrite, unsigned int dataLen)
     uint8_t *dataToSend = NULL;
     int wlen;
 
-    if (libIsInitialized == 0) {
+    if (libIsInitialized == 0)
         return BASE_TYPES_LIB_NOT_INITIALIZED;
-    }
 
-    if (fd < 0) {
+    if (fd < 0)
         return BASE_TYPES_OPER_ERROR;
-    }
 
     // checking input parameters
-    if (dataToWrite == NULL) {
+    if (dataToWrite == NULL)
         return BASE_TYPES_OPER_ERROR;
-    }
 
-    if (check_data_len(dataLen)) {
+    if (check_data_len(dataLen))
         return BASE_TYPES_OPER_ERROR;
-    }
 
     dataToSend = malloc(256 * sizeof(uint8_t));
-    if (dataToSend == NULL) {
+    if (dataToSend == NULL)
         return BASE_TYPES_OPER_ERROR;
-    }
 
     // initialize CRC
     senderControl.CRC = 0xFF;
@@ -388,9 +370,8 @@ int uart_iqrf_write(uint8_t *dataToWrite, unsigned int dataLen)
 
     free(dataToSend);
 
-    if (wlen != senderControl.packetCnt) {
+    if (wlen != senderControl.packetCnt)
         return BASE_TYPES_OPER_ERROR;
-    }
 
     return BASE_TYPES_OPER_OK;
 }
@@ -402,7 +383,7 @@ int uart_iqrf_write(uint8_t *dataToWrite, unsigned int dataLen)
 * @param	dataLen		- length of received packet (in bytes)
 * @param	timeout		- the time I wait for the packet to be received (in ms)
 *
-* @return	@c BASE_TYPES_OPER_ERROR = error occures during read operation
+* @return	@c BASE_TYPES_OPER_ERROR = error occurs during read operation
 * @return	@c BASE_TYPES_LIB_NOT_INITIALIZED = UART library is not initialized
 * @return	@c BASE_TYPES_OPER_OK = data were successfully read
 * @return	@c UART_IQRF_ERROR_CRC = mismatched CRC
@@ -415,22 +396,18 @@ int uart_iqrf_read(uint8_t *readBuffer, uint8_t *dataLen, unsigned int timeout)
     int rlen;
 
     // checking input parameter
-    if (dataLen == NULL) {
+    if (dataLen == NULL)
         return BASE_TYPES_OPER_ERROR;
-    }
-    else {
+    else
         *dataLen = 0;
-    }
 
     // checking input parameter
-    if (readBuffer == NULL) {
+    if (readBuffer == NULL)
         return BASE_TYPES_OPER_ERROR;
-    }
 
     // checking if library is initialized
-    if (libIsInitialized == 0) {
+    if (libIsInitialized == 0)
         return BASE_TYPES_LIB_NOT_INITIALIZED;
-    }
 
     receiverControl.decodeInProgress = 0;
 
@@ -449,8 +426,7 @@ int uart_iqrf_read(uint8_t *readBuffer, uint8_t *dataLen, unsigned int timeout)
                     if (receiverControl.CRC == 0) {
                         *dataLen = receiverControl.packetCnt - 1;
                         return(BASE_TYPES_OPER_OK);
-                    }
-                    else {
+                    } else {
                         return (UART_IQRF_ERROR_CRC);
                     }
                 }
@@ -473,8 +449,7 @@ int uart_iqrf_read(uint8_t *readBuffer, uint8_t *dataLen, unsigned int timeout)
                 // write received char to buffer
                 *((uint8_t *)readBuffer + receiverControl.packetCnt) = inputChar;
                 receiverControl.packetCnt++;
-            }
-            else {
+            } else {
                 if (inputChar == HDLC_FRM_FLAG_SEQUENCE) {
                     receiverControl.CRC = 0xFF;
                     receiverControl.packetCnt = 0;
@@ -488,17 +463,15 @@ int uart_iqrf_read(uint8_t *readBuffer, uint8_t *dataLen, unsigned int timeout)
         SLEEP(5);
 
         // check if receiver timeout has been elapsed
-        if ((get_ms_ts() - start) > timeout){
-            if (receiverControl.decodeInProgress){
-                if (receiverControl.delayRxTimeout){
+        if ((get_ms_ts() - start) > timeout) {
+            if (receiverControl.decodeInProgress) {
+                if (receiverControl.delayRxTimeout) {
                     break;
-                }
-                else{
+                } else {
                     receiverControl.delayRxTimeout = 1;
                     timeout += 500;
                 }
-            }
-            else{
+            } else {
                 break;
             }
         }
@@ -511,9 +484,9 @@ int uart_iqrf_read(uint8_t *readBuffer, uint8_t *dataLen, unsigned int timeout)
 * set parameters of uart port
 *
 * @param	fd	- port identificator
-* @param	speed		- comunication baudrate
+* @param	speed		- communication baud rate
 *
-* @return	@c BASE_TYPES_OPER_ERROR = error occures during parameters set
+* @return	@c BASE_TYPES_OPER_ERROR = error occurs during parameters set
 * @return	@c BASE_TYPES_OPER_OK = parameters set OK
 */
 int set_interface_attribs(int fd, int speed)
@@ -534,7 +507,7 @@ int set_interface_attribs(int fd, int speed)
     tty.c_cflag |= CS8;         /* 8-bit characters */
     tty.c_cflag &= ~PARENB;     /* no parity bit */
     tty.c_cflag &= ~CSTOPB;     /* only need 1 stop bit */
-    tty.c_cflag &= ~CRTSCTS;    /* no hardware flowcontrol */
+    tty.c_cflag &= ~CRTSCTS;    /* no hardware flow control */
 
     /* setup for non-canonical mode */
     tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
@@ -556,14 +529,13 @@ int set_interface_attribs(int fd, int speed)
 * Open and setup UART channel.
 *
 *
-* @return	@c BASE_TYPES_OPER_ERROR = error occures during UART initialization
+* @return	@c BASE_TYPES_OPER_ERROR = error occurs during UART initialization
 * @return	@c BASE_TYPES_OPER_OK = UART channel initialized OK
 */
 int uart_iqrf_open(void)
 {
-    if (fd != NO_FILE_DESCRIPTOR) {
+    if (fd != NO_FILE_DESCRIPTOR)
         return BASE_TYPES_OPER_ERROR;
-    }
 
 #ifndef WIN32
     fd = open(uartIqrfConfig->uartDev, O_RDWR | O_NOCTTY | O_SYNC);
@@ -584,27 +556,24 @@ int uart_iqrf_open(void)
 *
 *
 * @return	@c BASE_TYPES_LIB_NOT_INITIALIZED = uart library was not initialized
-* @return	@c BASE_TYPES_OPER_ERROR = error occures during UART channel closing
+* @return	@c BASE_TYPES_OPER_ERROR = error occurs during UART channel closing
 * @return	@c BASE_TYPES_OPER_OK = UART channel closed OK
 */
 int uart_iqrf_close(void)
 {
     int closeRes;
 
-    if (fd == NO_FILE_DESCRIPTOR) {
+    if (fd == NO_FILE_DESCRIPTOR)
         return BASE_TYPES_LIB_NOT_INITIALIZED;
-    }
 
-    if (fd < 0) {
+    if (fd < 0)
         return BASE_TYPES_OPER_ERROR;
-    }
 
     closeRes = close(fd);
     fd = NO_FILE_DESCRIPTOR;
 
-    if (closeRes == -1) {
+    if (closeRes == -1)
         return BASE_TYPES_OPER_ERROR;
-    }
 
     return BASE_TYPES_OPER_OK;
 }
@@ -613,32 +582,28 @@ int uart_iqrf_close(void)
 * Destroys IQRF UART library object and releases UART port
 *
 *
-* @return	@c BASE_TYPES_OPER_ERROR = error occures during UART destroy operation
+* @return	@c BASE_TYPES_OPER_ERROR = error occurs during UART destroy operation
 * @return	@c BASE_TYPES_LIB_NOT_INITIALIZED = UART library is not initialized
 * @return	@c BASE_TYPES_OPER_OK = UART channel was successfully closed
 */
 int uart_iqrf_destroy(void)
 {
-    if (libIsInitialized == 0) {
+    if (libIsInitialized == 0)
         return BASE_TYPES_LIB_NOT_INITIALIZED;
-    }
 
     // after calling this method, the behavior of the library will be
     // like if the library was not initialized
     libIsInitialized = 0;
 
     // destroy used GPIO pins
-    if (uartIqrfConfig->powerEnableGpioPin != -1) {
+    if (uartIqrfConfig->powerEnableGpioPin != -1)
         clibuart_gpio_cleanup(uartIqrfConfig->powerEnableGpioPin);
-    }
-    if (uartIqrfConfig->busEnableGpioPin != -1) {
+    if (uartIqrfConfig->busEnableGpioPin != -1)
         clibuart_gpio_cleanup(uartIqrfConfig->busEnableGpioPin);
-    }
-    if (uartIqrfConfig->pgmSwitchGpioPin != -1) {
+    if (uartIqrfConfig->pgmSwitchGpioPin != -1)
         clibuart_gpio_cleanup(uartIqrfConfig->pgmSwitchGpioPin);
-    }
 
-    // dealocate receive buffer
+    // deallocate receive buffer
     free(receiverControl.receiveBuffer);
 
     return uart_iqrf_close();
@@ -679,8 +644,7 @@ static int clibuart_write_data(FILE *fd, const char *buf)
     if (ret != strlen(buf)) {
         printf("Error during writing to file\n");
         ret = -1;
-    }
-    else {
+    } else {
         ret = 0;
     }
 
@@ -770,12 +734,10 @@ int clibuart_gpio_setDirection(int gpio, clibuart_gpio_direction dir)
         printf("Error during opening file (set direction): %s  %s\n", path, strerror(errno));
         return -1;
     }
-    if (dir == GPIO_DIRECTION_IN) {
+    if (dir == GPIO_DIRECTION_IN)
         strncpy(buf, GPIO_DIRECTION_IN_STR, sizeof(buf));
-    }
-    else if (dir == GPIO_DIRECTION_OUT) {
+    else if (dir == GPIO_DIRECTION_OUT)
         strncpy(buf, GPIO_DIRECTION_OUT_STR, sizeof(buf));
-    }
 
     ret = clibuart_write_data(fd, buf);
     if (ret)
@@ -926,8 +888,7 @@ int clibuart_gpio_setup(int gpio, clibuart_gpio_direction dir, int val)
         if (!ret) {
             printf("clibuart_gpio_setup() setDir success: %d\n", i);
             break;
-        }
-        else {
+        } else {
             printf("clibuart_gpio_setup() setDir failed wait for 100 ms to next try: %d\n", i);
             SLEEP(100);
         }
