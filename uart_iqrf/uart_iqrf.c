@@ -147,6 +147,8 @@ T_UART_RECEIVER_CONTROL  receiverControl;
 
 /** Values that represent GPIO directions. */
 typedef enum _clibuart_gpio_direction {
+    ///< An enum constant representing not available GPIO direction
+    GPIO_DIRECTION_NOT_AVAILABLE = -1,
     ///< An enum constant representing GPIO input
     GPIO_DIRECTION_IN = 0,
     ///< An enum constant representing GPIO output
@@ -211,12 +213,16 @@ static int check_data_len(unsigned int dataLen)
 uint8_t dpa_do_CRC8(uint8_t inData, uint8_t seed)
 {
     uint8_t bitsLeft;
+    uint8_t seedTemp;
 
     for (bitsLeft = 8; bitsLeft > 0; bitsLeft--) {
-        if (((seed ^ inData) & 0x01) == 0)
+        if (((seed ^ inData) & 0x01) == 0) {
             seed >>= 1;
-        else
-            seed = (seed >>= 1)^0x8C;
+	} else {
+	    seedTemp = (seed >>= 1);
+	    seedTemp ^= 0x8C;
+            seed = seedTemp;
+	}
         inData >>= 1;
     }
     return (seed);
@@ -641,7 +647,7 @@ static int clibuart_write_data(FILE *fd, const char *buf)
     int ret = 0;
 
     ret = fwrite(buf, 1, strlen(buf), fd);
-    if (ret != strlen(buf)) {
+    if (ret != (int)strlen(buf)) {
         printf("Error during writing to file\n");
         ret = -1;
     } else {
@@ -753,8 +759,9 @@ err:
 *
 * @param gpio	GPIO
 *
-* @return	GPIO_DIRECTION_IN = GPIO set to input.
-* @return	GPIO_DIRECTION_OUT = GPIO set to output.
+* @return	GPIO_DIRECTION_NOT_AVAILABLE = GPIO direction information not available.
+* @return	GPIO_DIRECTION_IN = GPIO is set to input.
+* @return	GPIO_DIRECTION_OUT = GPIO is set to output.
 */
 clibuart_gpio_direction clibuart_gpio_getDirection(int gpio)
 {
@@ -770,13 +777,14 @@ clibuart_gpio_direction clibuart_gpio_getDirection(int gpio)
 
     if (!fd) {
         printf("Error during opening file (get direction): %s\n", strerror(errno));
-        return -1;
+        return GPIO_DIRECTION_NOT_AVAILABLE;
     }
+
+    dir = GPIO_DIRECTION_NOT_AVAILABLE;
 
     ret = fread(buf, 1, sizeof(buf), fd);
     if (!ret) {
         printf("Error during reading file\n");
-        ret = -1;
         goto err;
     }
 
@@ -785,11 +793,9 @@ clibuart_gpio_direction clibuart_gpio_getDirection(int gpio)
     else if (!strcmp(buf, GPIO_DIRECTION_OUT_STR))
         dir = GPIO_DIRECTION_OUT;
 
-    ret = 0;
-
 err:
     fclose(fd);
-    return ret;
+    return dir;
 }
 
 /**
