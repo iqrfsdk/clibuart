@@ -24,29 +24,18 @@
 // #define UP
 // #define UP2
 // #define OPIZ
-
-// uncomment if UNI PI board is used
-// #define UNI_PI
+// #define AXON
 
 #if defined  (RPI_1) || defined (RPI_3)
 
 /* !!! if GPIO pin is not implemented, define it as -1 */
 
-#ifdef UNI_PI
-    /** PGM Switch GPIO. */
-    #define PGM_SWITCH_GPIO (-1)
-    /** Bus enable GPIO. */
-    #define BUS_ENABLE_GPIO (-1)
-    /** Power enable GPIO. */
-    #define POWER_ENABLE_GPIO (18)
-#else
-    /** PGM Switch GPIO. */
-    #define PGM_SWITCH_GPIO (22)
-    /** Bus enable GPIO. */
-    #define BUS_ENABLE_GPIO (7)
-    /** Power enable GPIO. */
-    #define POWER_ENABLE_GPIO (23)
-#endif
+/** PGM Switch GPIO. */
+#define PGM_SWITCH_GPIO (22)
+/** Bus enable GPIO. */
+#define BUS_ENABLE_GPIO (7)
+/** Power enable GPIO. */
+#define POWER_ENABLE_GPIO (23)
 
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
@@ -121,5 +110,25 @@
 #endif
 
 #endif /* OPI */
+
+
+#ifdef AXON
+
+/* !!! if GPIO pin is not implemented, define it as -1 */
+
+/** PGM Switch GPIO. */
+#define PGM_SWITCH_GPIO (-1)
+/** Bus enable GPIO. */
+#define BUS_ENABLE_GPIO (18)
+/** Power enable GPIO. */
+#define POWER_ENABLE_GPIO (19)
+
+#define UART_IQRF_DEFAULT_SPEED  B57600
+
+#ifndef UART_IQRF_DEFAULT_DEVICE
+    #define UART_IQRF_DEFAULT_DEVICE "/dev/ttyS0"
+#endif
+
+#endif /* UNIPI AXON */
 
 #endif /* __MACHINES_DEF_H */
