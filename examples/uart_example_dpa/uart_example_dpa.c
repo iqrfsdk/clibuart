@@ -328,7 +328,7 @@ int execute_dpa_command(const uint8_t *dpaMessage, int dataLen)
  */
 void print_data_in_hex(unsigned char *data, unsigned int length)
 {
-    int i = 0;
+    unsigned int i = 0;
 
     for (i = 0; i < length; i++) {
         printf("0x%.2x", (int) *data);
