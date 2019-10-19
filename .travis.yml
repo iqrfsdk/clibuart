@@ -1,0 +1,7 @@
+language: cpp
+compiler:
+  - gcc
+  - clang
+dist: bionic
+script:
+  - bash buildMake.sh
