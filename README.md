@@ -1,5 +1,7 @@
 ﻿# UART-IQRF
 
+[![Build Status](https://travis-ci.com/iqrfsdk/clibuart.svg?branch=master)](https://travis-ci.com/iqrfsdk/clibuart)
+
 HDLC UART driver for Raspberry Pi support of IQRF DCTR-5xDx and 7xDx transceiver modules with `OS v3.08D and higher`.
 
 Features
