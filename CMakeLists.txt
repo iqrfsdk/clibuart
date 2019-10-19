@@ -21,6 +21,14 @@ endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Wall")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Wall")
+else ()
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror=format-security")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror=format-security")
+endif ()
+
 message(STATUS "CMAKE_CXX_STANDARD:     ${CMAKE_CXX_STANDARD}")
 message(STATUS "CMAKE_CXX_FLAGS:         ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
