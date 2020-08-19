@@ -280,21 +280,33 @@ int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *configStruct)
     if (uartIqrfConfig->busEnableGpioPin != -1) {
         clibuart_gpio_setup(uartIqrfConfig->busEnableGpioPin, GPIO_DIRECTION_OUT, 0);
         SLEEP(1);
-    }
-
-    // Reset TR module
-    if (uartIqrfConfig->powerEnableGpioPin != -1) {
-        // Disable PWR for TR
-        clibuart_gpio_setValue(uartIqrfConfig->powerEnableGpioPin, 0);
-        // Sleep for 300ms
-        SLEEP(300);
-        // Enable PWR for TR
-        clibuart_gpio_setValue(uartIqrfConfig->powerEnableGpioPin, 1);
+    } else {
+        clibuart_gpio_setup(uartIqrfConfig->uartEnableGpioPin, GPIO_DIRECTION_OUT, 0);
+        clibuart_gpio_setup(uartIqrfConfig->spiEnableGpioPin, GPIO_DIRECTION_OUT, 0);
+        clibuart_gpio_setup(uartIqrfConfig->i2cEnableGpioPin, GPIO_DIRECTION_OUT, 0);
         SLEEP(1);
     }
 
-    if (uartIqrfConfig->busEnableGpioPin != -1)
+    // Reset TR module
+    if (uartIqrfConfig->trModuleReset == TR_MODULE_RESET_ENABLE) {
+        if (uartIqrfConfig->powerEnableGpioPin != -1) {
+            // Disable PWR for TR
+            clibuart_gpio_setValue(uartIqrfConfig->powerEnableGpioPin, 0);
+            // Sleep for 300ms
+            SLEEP(300);
+            // Enable PWR for TR
+            clibuart_gpio_setValue(uartIqrfConfig->powerEnableGpioPin, 1);
+            SLEEP(1);
+        }
+    }
+
+    if (uartIqrfConfig->busEnableGpioPin != -1) {
         clibuart_gpio_setValue(uartIqrfConfig->busEnableGpioPin, 1);
+    } else {
+        clibuart_gpio_setValue(uartIqrfConfig->uartEnableGpioPin, 1);
+        clibuart_gpio_setValue(uartIqrfConfig->spiEnableGpioPin, 0);
+        clibuart_gpio_setValue(uartIqrfConfig->i2cEnableGpioPin, 1);
+    }
 
     // Sleep for 500ms (in this time TR module waits for sequence to switch to programming mode)
     SLEEP(500);
@@ -305,8 +317,13 @@ int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *configStruct)
     } else {
         if (uartIqrfConfig->powerEnableGpioPin != -1)
             clibuart_gpio_cleanup(uartIqrfConfig->powerEnableGpioPin);
-        if (uartIqrfConfig->busEnableGpioPin != -1)
+        if (uartIqrfConfig->busEnableGpioPin != -1) {
             clibuart_gpio_cleanup(uartIqrfConfig->busEnableGpioPin);
+        } else {
+            clibuart_gpio_cleanup(uartIqrfConfig->uartEnableGpioPin);
+            clibuart_gpio_cleanup(uartIqrfConfig->spiEnableGpioPin);
+            clibuart_gpio_cleanup(uartIqrfConfig->i2cEnableGpioPin);
+        }
         if (uartIqrfConfig->pgmSwitchGpioPin != -1)
             clibuart_gpio_cleanup(uartIqrfConfig->pgmSwitchGpioPin);
 

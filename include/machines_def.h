@@ -24,6 +24,7 @@
 // #define UP
 // #define UP2
 // #define OPIZ
+// #define OPIZ2
 // #define AXON
 
 #if defined  (RPI_1) || defined (RPI_3)
@@ -110,6 +111,29 @@
 #endif
 
 #endif /* OPI */
+
+
+#ifdef OPIZ2
+
+/* !!! if GPIO pin is not implemented, define it as -1 */
+
+/** PGM Switch GPIO. */
+#define PGM_SWITCH_GPIO (3)
+/** Bus enable GPIOs. */
+#define BUS_ENABLE_GPIO (-1)
+#define UART_ENABLE_GPIO (6)
+#define SPI_ENABLE_GPIO (10)
+#define I2C_ENABLE_GPIO (7)
+/** Power enable GPIO. */
+#define POWER_ENABLE_GPIO (19)
+
+#define UART_IQRF_DEFAULT_SPEED  B57600
+
+#ifndef UART_IQRF_DEFAULT_DEVICE
+    #define UART_IQRF_DEFAULT_DEVICE "/dev/ttyS0"
+#endif
+
+#endif /* OPI2 */
 
 
 #ifdef AXON

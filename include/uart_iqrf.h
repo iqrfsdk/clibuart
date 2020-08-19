@@ -55,13 +55,23 @@ typedef enum uart_iqrf_Errors {
     UART_IQRF_ERROR_TIMEOUT = -11    /* receiver timeout */
 } uqrt_iqrf_Errors;
 
+typedef enum _tr_module_reset
+{
+    TR_MODULE_RESET_ENABLE = 0,
+    TR_MODULE_RESET_DISABLE
+} tr_module_reset;
+
 typedef struct {
     /** Device file name*/
     char uartDev[UART_DEV_CAPACITY+1];
     int baudRate;
-    int8_t powerEnableGpioPin;
-    int8_t busEnableGpioPin;
-    int8_t pgmSwitchGpioPin;
+    int8_t powerEnableGpioPin;      // GPIO to enable power supply to TR module
+    int8_t busEnableGpioPin;        // GPIO to enable function of SPI bus
+    int8_t pgmSwitchGpioPin;        // GPIO to switch TR module to PGM mode
+    int8_t spiEnableGpioPin;        // GPIO to enable function of SPI bus
+    int8_t uartEnableGpioPin;       // GPIO to enable function of UART bus
+    int8_t i2cEnableGpioPin;        // GPIO to enable function of I2C bus
+    tr_module_reset trModuleReset;  // enable / disable TR module reset during library initialization
 } T_UART_IQRF_CONFIG_STRUCT;
 
 /**
