@@ -171,12 +171,6 @@ int open_communication(void)
 {
     int operResult;
 
-    strcpy (myUartIqrfConfig.uartDev, UART_IQRF_DEFAULT_DEVICE);
-    myUartIqrfConfig.baudRate = UART_IQRF_DEFAULT_SPEED;
-    myUartIqrfConfig.powerEnableGpioPin = POWER_ENABLE_GPIO;
-    myUartIqrfConfig.busEnableGpioPin = BUS_ENABLE_GPIO;
-    myUartIqrfConfig.pgmSwitchGpioPin = PGM_SWITCH_GPIO;
-
     operResult = uart_iqrf_init(&myUartIqrfConfig);
     if (operResult < 0) {
         printf("Initialization failed: %d \n\r", operResult);
