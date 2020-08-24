@@ -278,6 +278,7 @@ int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *configStruct)
     else
         strcpy(uartIqrfConfig->uartDev, UART_IQRF_DEFAULT_DEVICE);
 
+    uartIqrfConfig->baudRate = UART_IQRF_DEFAULT_SPEED;
     uartIqrfConfig->powerEnableGpioPin = POWER_ENABLE_GPIO;
     uartIqrfConfig->busEnableGpioPin = BUS_ENABLE_GPIO;  
 
