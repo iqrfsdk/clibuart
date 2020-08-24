@@ -654,8 +654,13 @@ int uart_iqrf_destroy(void)
     // destroy used GPIO pins
     if (uartIqrfConfig->powerEnableGpioPin != -1)
         clibuart_gpio_cleanup(uartIqrfConfig->powerEnableGpioPin);
-    if (uartIqrfConfig->busEnableGpioPin != -1)
+    if (uartIqrfConfig->busEnableGpioPin != -1) {
         clibuart_gpio_cleanup(uartIqrfConfig->busEnableGpioPin);
+    } else {
+        clibuart_gpio_cleanup(uartIqrfConfig->spiEnableGpioPin);
+        clibuart_gpio_cleanup(uartIqrfConfig->uartEnableGpioPin);
+        clibuart_gpio_cleanup(uartIqrfConfig->i2cEnableGpioPin);
+    } 
     if (uartIqrfConfig->pgmSwitchGpioPin != -1)
         clibuart_gpio_cleanup(uartIqrfConfig->pgmSwitchGpioPin);
 
