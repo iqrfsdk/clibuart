@@ -171,6 +171,40 @@ int open_communication(void)
 {
     int operResult;
 
+    // Copy UART device name
+    if (strlen(UART_IQRF_DEFAULT_DEVICE) > UART_DEV_CAPACITY)
+        return BASE_TYPES_OPER_ERROR;
+    else
+        strcpy(myUartIqrfConfig.uartDev, UART_IQRF_DEFAULT_DEVICE);
+
+    myUartIqrfConfig.baudRate = UART_IQRF_DEFAULT_SPEED;
+    myUartIqrfConfig.powerEnableGpioPin = POWER_ENABLE_GPIO;
+    myUartIqrfConfig.busEnableGpioPin = BUS_ENABLE_GPIO;  
+
+    if (myUartIqrfConfig.busEnableGpioPin == -1) {
+#ifdef SPI_ENABLE_GPIO 
+        myUartIqrfConfig.spiEnableGpioPin = SPI_ENABLE_GPIO;
+#else
+        myUartIqrfConfig.spiEnableGpioPin = -1;
+#endif
+#ifdef UART_ENABLE_GPIO
+        myUartIqrfConfig.uartEnableGpioPin = UART_ENABLE_GPIO;
+#else
+        myUartIqrfConfig.uartEnableGpioPin = -1;
+#endif
+#ifdef I2C_ENABLE_GPIO
+        myUartIqrfConfig.i2cEnableGpioPin = I2C_ENABLE_GPIO;
+#else
+        myUartIqrfConfig.i2cEnableGpioPin = -1;
+#endif
+    } else {
+        myUartIqrfConfig.spiEnableGpioPin = -1;
+        myUartIqrfConfig.uartEnableGpioPin = -1;
+        myUartIqrfConfig.i2cEnableGpioPin = -1;
+    }
+    myUartIqrfConfig.pgmSwitchGpioPin = PGM_SWITCH_GPIO;
+    myUartIqrfConfig.trModuleReset = TR_MODULE_RESET_ENABLE;
+
     operResult = uart_iqrf_init(&myUartIqrfConfig);
     if (operResult < 0) {
         printf("Initialization failed: %d \n\r", operResult);

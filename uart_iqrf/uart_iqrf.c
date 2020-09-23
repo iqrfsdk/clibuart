@@ -272,40 +272,6 @@ int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *configStruct)
 
     uartIqrfConfig = (T_UART_IQRF_CONFIG_STRUCT *)configStruct;
 
-    // Copy UART device name
-    if (strlen(UART_IQRF_DEFAULT_DEVICE) > UART_DEV_CAPACITY)
-        return BASE_TYPES_OPER_ERROR;
-    else
-        strcpy(uartIqrfConfig->uartDev, UART_IQRF_DEFAULT_DEVICE);
-
-    uartIqrfConfig->baudRate = UART_IQRF_DEFAULT_SPEED;
-    uartIqrfConfig->powerEnableGpioPin = POWER_ENABLE_GPIO;
-    uartIqrfConfig->busEnableGpioPin = BUS_ENABLE_GPIO;  
-
-    if (uartIqrfConfig->busEnableGpioPin == -1) {
-#ifdef SPI_ENABLE_GPIO 
-        uartIqrfConfig->spiEnableGpioPin = SPI_ENABLE_GPIO;
-#else
-        uartIqrfConfig->spiEnableGpioPin = -1;
-#endif
-#ifdef UART_ENABLE_GPIO
-        uartIqrfConfig->uartEnableGpioPin = UART_ENABLE_GPIO;
-#else
-        uartIqrfConfig->uartEnableGpioPin = -1;
-#endif
-#ifdef I2C_ENABLE_GPIO
-        uartIqrfConfig->i2cEnableGpioPin = I2C_ENABLE_GPIO;
-#else
-        uartIqrfConfig->i2cEnableGpioPin = -1;
-#endif
-    } else {
-        uartIqrfConfig->spiEnableGpioPin = -1;
-        uartIqrfConfig->uartEnableGpioPin = -1;
-        uartIqrfConfig->i2cEnableGpioPin = -1;
-    }
-    uartIqrfConfig->pgmSwitchGpioPin = PGM_SWITCH_GPIO;
-    uartIqrfConfig->trModuleReset = TR_MODULE_RESET_ENABLE;
-
     // Initialize PGM SW pin, bus enable pin & power enable
     if (uartIqrfConfig->pgmSwitchGpioPin != -1)
         clibuart_gpio_setup(uartIqrfConfig->pgmSwitchGpioPin, GPIO_DIRECTION_OUT, 0);
