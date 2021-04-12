@@ -37,6 +37,12 @@
 #define BUS_ENABLE_GPIO (7)
 /** Power enable GPIO. */
 #define POWER_ENABLE_GPIO (23)
+/** I2C enable GPIO */
+#define I2C_ENABLE_GPIO (-1)
+/** SPI enable GPIO */
+#define SPI_ENABLE_GPIO (-1)
+/** UART enable GPIO */
+#define UART_ENABLE_GPIO (-1)
 
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
@@ -63,6 +69,12 @@
 #define BUS_ENABLE_GPIO (7)
 /** Power enable GPIO. */
 #define POWER_ENABLE_GPIO (23)
+/** I2C enable GPIO */
+#define I2C_ENABLE_GPIO (-1)
+/** SPI enable GPIO */
+#define SPI_ENABLE_GPIO (-1)
+/** UART enable GPIO */
+#define UART_ENABLE_GPIO (-1)
 
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
@@ -83,6 +95,12 @@
 #define BUS_ENABLE_GPIO (7)
 /** Power enable GPIO. */
 #define POWER_ENABLE_GPIO (23)
+/** I2C enable GPIO */
+#define I2C_ENABLE_GPIO (-1)
+/** SPI enable GPIO */
+#define SPI_ENABLE_GPIO (-1)
+/** UART enable GPIO */
+#define UART_ENABLE_GPIO (-1)
 
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
@@ -103,6 +121,12 @@
 #define BUS_ENABLE_GPIO (10)
 /** Power enable GPIO. */
 #define POWER_ENABLE_GPIO (19)
+/** I2C enable GPIO */
+#define I2C_ENABLE_GPIO (-1)
+/** SPI enable GPIO */
+#define SPI_ENABLE_GPIO (-1)
+/** UART enable GPIO */
+#define UART_ENABLE_GPIO (-1)
 
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
@@ -146,6 +170,12 @@
 #define BUS_ENABLE_GPIO (18)
 /** Power enable GPIO. */
 #define POWER_ENABLE_GPIO (19)
+/** I2C enable GPIO */
+#define I2C_ENABLE_GPIO (-1)
+/** SPI enable GPIO */
+#define SPI_ENABLE_GPIO (-1)
+/** UART enable GPIO */
+#define UART_ENABLE_GPIO (-1)
 
 #define UART_IQRF_DEFAULT_SPEED  B57600
 
