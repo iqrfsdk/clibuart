@@ -74,6 +74,29 @@ typedef struct {
     tr_module_reset trModuleReset;  // enable / disable TR module reset during library initialization
 } T_UART_IQRF_CONFIG_STRUCT;
 
+typedef struct {
+    uint8_t packetCnt;
+    uint8_t CRC;
+} T_UART_SEND_CONTROL;
+
+typedef struct {
+    uint8_t *receiveBuffer;
+    uint8_t packetCnt;
+    uint8_t CRC;
+    uint8_t decodeInProgress;
+    uint8_t wasEscape;
+    uint8_t delayRxTimeout;
+    int     rBuffCnt;
+    int     timeoutTimer;
+} T_UART_RECEIVER_CONTROL;
+
+typedef struct {
+    int initialized;
+    int fd;
+    T_UART_SEND_CONTROL sendControl;
+    T_UART_RECEIVER_CONTROL recvControl;
+} T_UART_SOCKET_CONTROL;
+
 /**
 * Initialization of the UART for IQRF module with advanced setting
 *
@@ -82,7 +105,7 @@ typedef struct {
 * @return	@c BASE_TYPES_OPER_ERROR = initialization failed
 * @return	@c BASE_TYPES_OPER_OK = initialization was correct
 */
-UART_IQRF_DECLSPEC int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *configStruct);
+UART_IQRF_DECLSPEC int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *uartConfig, T_UART_SOCKET_CONTROL *socket);
 
 /**
 * Writes data to TR module
@@ -94,7 +117,7 @@ UART_IQRF_DECLSPEC int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *configStr
 * @return	@c BASE_TYPES_LIB_NOT_INITIALIZED = uart library is not initialized
 * @return	@c BASE_TYPES_OPER_OK = data was successfully written
 */
-UART_IQRF_DECLSPEC int uart_iqrf_write(uint8_t *dataToWrite, unsigned int dataLen);
+UART_IQRF_DECLSPEC int uart_iqrf_write(T_UART_SOCKET_CONTROL *socket, uint8_t *dataToWrite, unsigned int dataLen);
 
 /**
 * Reads data from TR module
@@ -109,7 +132,7 @@ UART_IQRF_DECLSPEC int uart_iqrf_write(uint8_t *dataToWrite, unsigned int dataLe
 * @return	@c UART_IQRF_ERROR_CRC = mismatched CRC
 * @return	@c UART_IQRF_ERROR_TIMEOUT = receiver timeout (no data read)
 */
-UART_IQRF_DECLSPEC int uart_iqrf_read(uint8_t *readBuffer, uint8_t *dataLen, unsigned int timeout);
+UART_IQRF_DECLSPEC int uart_iqrf_read(T_UART_SOCKET_CONTROL *socket, uint8_t *readBuffer, uint8_t *dataLen, unsigned int timeout);
 
 
 /**
@@ -119,7 +142,7 @@ UART_IQRF_DECLSPEC int uart_iqrf_read(uint8_t *readBuffer, uint8_t *dataLen, uns
  * @return	@c BASE_TYPES_OPER_ERROR if an error has occurred during operation.
  * @return	@c BASE_TYPES_LIB_NOT_INITIALIZED if the library has not been initialized.
  */
-UART_IQRF_DECLSPEC int uart_iqrf_destroy(void);
+UART_IQRF_DECLSPEC int uart_iqrf_destroy(const T_UART_IQRF_CONFIG_STRUCT *uartConfig ,T_UART_SOCKET_CONTROL *socket);
 
 #ifdef __cplusplus
 }
