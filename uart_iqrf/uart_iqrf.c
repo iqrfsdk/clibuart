@@ -567,7 +567,7 @@ int uart_iqrf_open(const T_UART_IQRF_CONFIG_STRUCT *uartConfig, T_UART_SOCKET_CO
 #ifndef WIN32
     socket->fd = open(uartConfig->uartDev, O_RDWR | O_NOCTTY | O_SYNC);
     if (socket->fd < 0) {
-        socket = NO_FILE_DESCRIPTOR;
+        socket->fd = NO_FILE_DESCRIPTOR;
         return BASE_TYPES_OPER_ERROR;
     }
 
