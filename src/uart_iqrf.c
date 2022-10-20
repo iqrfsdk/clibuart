@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
- /**
-  * clibuart library serves as an programming interface for communication
-  * between Linux system and TR modules using UART and IO.
-  *
-  * @file   uart_iqrf.c
-  * @date   07.12.2018
-  * @ver    1.0.2
-  */
+/**
+ * clibuart library serves as an programming interface for communication
+ * between Linux system and TR modules using UART and IO.
+ *
+ * @file   uart_iqrf.c
+ * @date   07.12.2018
+ * @ver    1.0.2
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -102,17 +102,7 @@ static uint64_t get_ms_ts()
 #define snprintf _snprintf
 #endif
 
-/* constants */
-#define GPIO_BASE_PATH "/sys/class/gpio"
-#define GPIO_EXPORT_PATH GPIO_BASE_PATH"/export"
-#define GPIO_UNEXPORT_PATH GPIO_BASE_PATH"/unexport"
-
-#define GPIO_DIRECTION_STR "direction"
-#define GPIO_VALUE_STR "value"
-
-/* gpio clibuart_gpio_getDirection state */
-#define GPIO_DIRECTION_IN_STR "in"
-#define GPIO_DIRECTION_OUT_STR "out"
+#include "iqrf_gpio.h"
 
 /************************************/
 /* Private constants                */
@@ -125,34 +115,15 @@ static const int NO_FILE_DESCRIPTOR = -1;
 #define HDLC_FRM_CONTROL_ESCAPE   0x7D
 #define HDLC_FRM_ESCAPE_BIT       0x20
 
-/** Values that represent GPIO directions. */
-typedef enum _clibuart_gpio_direction {
-    ///< An enum constant representing not available GPIO direction
-    GPIO_DIRECTION_NOT_AVAILABLE = -1,
-    ///< An enum constant representing GPIO input
-    GPIO_DIRECTION_IN = 0,
-    ///< An enum constant representing GPIO output
-    GPIO_DIRECTION_OUT
-} clibuart_gpio_direction;
-
 /************************************/
 /* Private functions predeclaration */
 /************************************/
 static int check_data_len(unsigned int dataLen);
-uint8_t dpa_do_CRC8(uint8_t inData, uint8_t seed);
+uint8_t dpa_do_CRC8(uint8_t byte, uint8_t seed);
 uint8_t write_byte_to_buffer(T_UART_SOCKET_CONTROL *socket, uint8_t *dataBuffer, uint8_t dataByte);
 int set_interface_attribs(int fd, int speed);
 static int uart_iqrf_open(const T_UART_IQRF_CONFIG_STRUCT *uartConfig, T_UART_SOCKET_CONTROL *socket);
 static int uart_iqrf_close(T_UART_SOCKET_CONTROL *socket);
-
-int clibuart_gpio_export(uint32_t gpio);
-int clibuart_gpio_unexport(uint32_t gpio);
-int clibuart_gpio_setDirection(uint32_t gpio, clibuart_gpio_direction dir);
-clibuart_gpio_direction clibuart_gpio_getDirection(uint32_t gpio);
-int clibuart_gpio_setValue(uint32_t gpio, int val);
-int clibuart_gpio_getValue(uint32_t gpio);
-int clibuart_gpio_setup(uint32_t gpio, clibuart_gpio_direction dir, int val);
-int clibuart_gpio_cleanup(uint32_t gpio);
 
 /**
  * Checks length of the data to be written or read.
@@ -176,26 +147,22 @@ static int check_data_len(unsigned int dataLen)
 
 /**
  * Compute the CRC8 value of a data set
- * @param inData One byte of data to compute CRC from
+ * @param byte One byte of data to compute CRC from
  * @param seed The starting value of the CRC
  * @return The CRC8 of inData with seed as initial value
  */
-uint8_t dpa_do_CRC8(uint8_t inData, uint8_t seed)
+uint8_t dpa_do_CRC8(uint8_t byte, uint8_t seed)
 {
-    uint8_t bitsLeft;
-    uint8_t seedTemp;
-
-    for (bitsLeft = 8; bitsLeft > 0; bitsLeft--) {
-        if (((seed ^ inData) & 0x01) == 0) {
-            seed >>= 1;
-	} else {
-	    seedTemp = (seed >>= 1);
-	    seedTemp ^= 0x8C;
-            seed = seedTemp;
-	}
-        inData >>= 1;
+    bool needsXor;
+    for (uint8_t bitsLeft = 8; bitsLeft > 0; bitsLeft--) {
+        needsXor = (seed ^ byte) & 1;
+        seed >>= 1;
+        if (needsXor) {
+            seed ^= 0x8C;
+        }
+        byte >>= 1;
     }
-    return (seed);
+    return seed;
 }
 
 
@@ -246,50 +213,52 @@ int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *uartConfig, T_UART_SOCKET_CO
     }
 
     // Initialize PGM SW pin, bus enable pin & power enable
-    if (uartConfig->pgmSwitchGpioPin != -1)
-        clibuart_gpio_setup((uint32_t)uartConfig->pgmSwitchGpioPin, GPIO_DIRECTION_OUT, 0);
-    if (uartConfig->powerEnableGpioPin != -1)
-        clibuart_gpio_setup((uint32_t)uartConfig->powerEnableGpioPin, GPIO_DIRECTION_OUT, 1);
-    if (uartConfig->busEnableGpioPin != -1) {
-        clibuart_gpio_setup((uint32_t)uartConfig->busEnableGpioPin, GPIO_DIRECTION_OUT, 0);
+    if (uartConfig->pgmSwitchGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+        iqrf_gpio_init_output(uartConfig->pgmSwitchGpioPin, false);
+    }
+    if (uartConfig->powerEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+        iqrf_gpio_init_output(uartConfig->powerEnableGpioPin, true);
+    }
+    if (uartConfig->busEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+        iqrf_gpio_init_output(uartConfig->busEnableGpioPin, false);
         SLEEP(1);
     } else {
-        if (uartConfig->uartEnableGpioPin != -1) {
-            clibuart_gpio_setup((uint32_t)uartConfig->uartEnableGpioPin, GPIO_DIRECTION_OUT, 0);
+        if (uartConfig->uartEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+            iqrf_gpio_init_output(uartConfig->uartEnableGpioPin, false);
         }
-        if (uartConfig->spiEnableGpioPin != -1) {
-            clibuart_gpio_setup((uint32_t)uartConfig->spiEnableGpioPin, GPIO_DIRECTION_OUT, 0);
+        if (uartConfig->spiEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+            iqrf_gpio_init_output(uartConfig->spiEnableGpioPin, false);
         }
-        if (uartConfig->i2cEnableGpioPin != -1) {
-            clibuart_gpio_setup((uint32_t)uartConfig->i2cEnableGpioPin, GPIO_DIRECTION_OUT, 0);
+        if (uartConfig->i2cEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+            iqrf_gpio_init_output(uartConfig->i2cEnableGpioPin, false);
         }
         SLEEP(1);
     }
 
     // Reset TR module
     if (uartConfig->trModuleReset == TR_MODULE_RESET_ENABLE) {
-        if (uartConfig->powerEnableGpioPin != -1) {
+        if (uartConfig->powerEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
             // Disable PWR for TR
-            clibuart_gpio_setValue((uint32_t)uartConfig->powerEnableGpioPin, 0);
+            iqrf_gpio_set_value(uartConfig->powerEnableGpioPin, false);
             // Sleep for 300ms
             SLEEP(300);
             // Enable PWR for TR
-            clibuart_gpio_setValue((uint32_t)uartConfig->powerEnableGpioPin, 1);
+            iqrf_gpio_set_value(uartConfig->powerEnableGpioPin, true);
             SLEEP(1);
         }
     }
 
-    if (uartConfig->busEnableGpioPin != -1) {
-        clibuart_gpio_setValue((uint32_t)uartConfig->busEnableGpioPin, 1);
+    if (uartConfig->busEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+        iqrf_gpio_set_value(uartConfig->busEnableGpioPin, true);
     } else {
-        if (uartConfig->uartEnableGpioPin != -1) {
-            clibuart_gpio_setValue((uint32_t)uartConfig->uartEnableGpioPin, 1);
+        if (uartConfig->uartEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+            iqrf_gpio_set_value(uartConfig->uartEnableGpioPin, true);
         }
-        if (uartConfig->spiEnableGpioPin != -1) {
-            clibuart_gpio_setValue((uint32_t)uartConfig->spiEnableGpioPin, 0);
+        if (uartConfig->spiEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+            iqrf_gpio_set_value(uartConfig->spiEnableGpioPin, false);
         }
-        if (uartConfig->i2cEnableGpioPin != -1) {
-            clibuart_gpio_setValue((uint32_t)uartConfig->i2cEnableGpioPin, 1);
+        if (uartConfig->i2cEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+            iqrf_gpio_set_value(uartConfig->i2cEnableGpioPin, true);
         }
     }
 
@@ -300,25 +269,25 @@ int uart_iqrf_init(const T_UART_IQRF_CONFIG_STRUCT *uartConfig, T_UART_SOCKET_CO
         socket->initialized = 1;
         return BASE_TYPES_OPER_OK;
     } else {
-        if (uartConfig->powerEnableGpioPin != -1) {
-            clibuart_gpio_cleanup((uint32_t)uartConfig->powerEnableGpioPin);
+        if (uartConfig->powerEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+            iqrf_gpio_unexport(uartConfig->powerEnableGpioPin);
         }
-        
-        if (uartConfig->busEnableGpioPin != -1) {
-            clibuart_gpio_cleanup((uint32_t)uartConfig->busEnableGpioPin);
+
+        if (uartConfig->busEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+            iqrf_gpio_unexport(uartConfig->busEnableGpioPin);
         } else {
-            if (uartConfig->uartEnableGpioPin != -1) {
-                clibuart_gpio_cleanup((uint32_t)uartConfig->uartEnableGpioPin);
+            if (uartConfig->spiEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+                iqrf_gpio_unexport(uartConfig->spiEnableGpioPin);
             }
-            if (uartConfig->spiEnableGpioPin != -1) {
-                clibuart_gpio_cleanup((uint32_t)uartConfig->spiEnableGpioPin);
+            if (uartConfig->uartEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+                iqrf_gpio_unexport(uartConfig->uartEnableGpioPin);
             }
-            if (uartConfig->i2cEnableGpioPin != -1) {
-                clibuart_gpio_cleanup((uint32_t)uartConfig->i2cEnableGpioPin);
+            if (uartConfig->i2cEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+                iqrf_gpio_unexport(uartConfig->i2cEnableGpioPin);
             }
         }
-        if (uartConfig->pgmSwitchGpioPin != -1) {
-            clibuart_gpio_cleanup((uint32_t)uartConfig->pgmSwitchGpioPin);
+        if (uartConfig->pgmSwitchGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+            iqrf_gpio_unexport(uartConfig->pgmSwitchGpioPin);
         }
 
         free(socket->recvControl.receiveBuffer);
@@ -627,344 +596,28 @@ int uart_iqrf_destroy(const T_UART_IQRF_CONFIG_STRUCT *uartConfig ,T_UART_SOCKET
     socket->initialized = 0;
 
     // destroy used GPIO pins
-    if (uartConfig->powerEnableGpioPin != -1) {
-        clibuart_gpio_cleanup((uint32_t)uartConfig->powerEnableGpioPin);
+    if (uartConfig->powerEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+        iqrf_gpio_unexport(uartConfig->powerEnableGpioPin);
     }
-    if (uartConfig->busEnableGpioPin != -1) {
-        clibuart_gpio_cleanup((uint32_t)uartConfig->busEnableGpioPin);
+    if (uartConfig->busEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+        iqrf_gpio_unexport(uartConfig->busEnableGpioPin);
     } else {
-        if (uartConfig->spiEnableGpioPin != -1) {
-            clibuart_gpio_cleanup((uint32_t)uartConfig->spiEnableGpioPin);
+        if (uartConfig->spiEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+            iqrf_gpio_unexport(uartConfig->spiEnableGpioPin);
         }
-        if (uartConfig->uartEnableGpioPin != -1) {
-            clibuart_gpio_cleanup((uint32_t)uartConfig->uartEnableGpioPin);
+        if (uartConfig->uartEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+            iqrf_gpio_unexport(uartConfig->uartEnableGpioPin);
         }
-        if (uartConfig->i2cEnableGpioPin != -1) {
-            clibuart_gpio_cleanup((uint32_t)uartConfig->i2cEnableGpioPin);
+        if (uartConfig->i2cEnableGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+            iqrf_gpio_unexport(uartConfig->i2cEnableGpioPin);
         }
-    } 
-    if (uartConfig->pgmSwitchGpioPin != -1) {
-        clibuart_gpio_cleanup((uint32_t)uartConfig->pgmSwitchGpioPin);
+    }
+    if (uartConfig->pgmSwitchGpioPin != IQRF_GPIO_PIN_UNKNOWN) {
+        iqrf_gpio_unexport(uartConfig->pgmSwitchGpioPin);
     }
 
     // deallocate receive buffer
     free(socket->recvControl.receiveBuffer);
 
     return uart_iqrf_close(socket);
-}
-
-/* ========================================================================= */
-/*                      GPIO manipulation functions                          */
-/* ========================================================================= */
-
-/**
-* Setup GPIO path
-*
-* @param [in]	gpio		GPIO
-* @param [in]	action		action
-* @param [in]	target		target
-* @param [in]	len			length
-*
-*/
-static void clibuart_setup_gpio_path(const uint32_t gpio, const char *action, char *target, int len)
-{
-    snprintf(target, len, GPIO_BASE_PATH"/gpio%d/%s", gpio, action);
-}
-
-/**
-* Writes data stored in @c fd file to buffer.
-*
-* @param [in]	fd		file to write.
-* @param [in]	buf		buffer where file is written
-*
-* @return	-1 = error during write
-* @return	0 = file was successfully written
-*/
-static int clibuart_write_data(FILE *fd, const char *buf)
-{
-    int ret = 0;
-
-    ret = fwrite(buf, 1, strlen(buf), fd);
-    if (ret != (int)strlen(buf)) {
-        printf("Error during writing to file\n");
-        ret = -1;
-    } else {
-        ret = 0;
-    }
-
-    return ret;
-}
-
-/**
-* Exports the GPIO pin to the GPIO array
-*
-* @param num	GPIO number
-*
-* @return	0 = operation was performed successfully.
-* @return	-1 = some error occurred.
-*/
-int clibuart_gpio_export(uint32_t num)
-{
-    FILE *fd = fopen(GPIO_EXPORT_PATH, "w");
-    char buf[5];
-    int ret;
-
-    if (!fd) {
-        printf("Error during opening file: %s\n", strerror(errno));
-        return -1;
-    }
-
-    snprintf(buf, sizeof(buf), "%d", num);
-    ret = clibuart_write_data(fd, buf);
-    if (ret) {
-        goto err;
-    }
-
-err:
-    fclose(fd);
-    return ret;
-}
-
-/**
-* Unexports the GPIO pin from the GPIO array
-*
-* @param num	GPIO number
-*
-* @return	0 = operation was performed successfully.
-* @return	-1 = some error occurred.
-*/
-int clibuart_gpio_unexport(uint32_t num)
-{
-    FILE *fd = fopen(GPIO_UNEXPORT_PATH, "w");
-    char buf[5];
-    int ret;
-
-    if (!fd) {
-        printf("Error during opening file: %s\n", strerror(errno));
-        return -1;
-    }
-
-    snprintf(buf, sizeof(buf), "%d", num);
-    ret = clibuart_write_data(fd, buf);
-    if (ret) {
-        goto err;
-    }
-
-err:
-    fclose(fd);
-    return ret;
-}
-
-
-/**
-* Gets direction of the GPIO
-*
-* @param gpio	GPIO
-* @param dir	GPIO direction  = GPIO_DIRECTION_IN or GPIO_DIRECTION_OUT
-*
-* @return	0 = operation was performed successfully.
-* @return	-1 = some error occurred.
-*/
-int clibuart_gpio_setDirection(uint32_t gpio, clibuart_gpio_direction dir)
-{
-    char path[50];
-    char buf[4];
-    FILE *fd = NULL;
-    int ret;
-
-    clibuart_setup_gpio_path(gpio, GPIO_DIRECTION_STR, path, sizeof(path));
-
-    fd = fopen(path, "w");
-
-    if (!fd) {
-        printf("Error during opening file (set direction): %s  %s\n", path, strerror(errno));
-        return -1;
-    }
-    if (dir == GPIO_DIRECTION_IN) {
-        strncpy(buf, GPIO_DIRECTION_IN_STR, sizeof(buf));
-    } else if (dir == GPIO_DIRECTION_OUT) {
-        strncpy(buf, GPIO_DIRECTION_OUT_STR, sizeof(buf));
-    }
-
-    ret = clibuart_write_data(fd, buf);
-    if (ret) {
-        goto err;
-    }
-
-err:
-    fclose(fd);
-    return ret;
-}
-
-/**
-* Gets direction of the GPIO
-*
-* @param gpio	GPIO
-*
-* @return	GPIO_DIRECTION_NOT_AVAILABLE = GPIO direction information not available.
-* @return	GPIO_DIRECTION_IN = GPIO is set to input.
-* @return	GPIO_DIRECTION_OUT = GPIO is set to output.
-*/
-clibuart_gpio_direction clibuart_gpio_getDirection(uint32_t gpio)
-{
-    char path[50];
-    char buf[4];
-    FILE *fd = NULL;
-    int ret;
-    clibuart_gpio_direction dir;
-
-    clibuart_setup_gpio_path(gpio, GPIO_DIRECTION_STR, path, sizeof(path));
-
-    fd = fopen(path, "r");
-
-    if (!fd) {
-        printf("Error during opening file (get direction): %s\n", strerror(errno));
-        return GPIO_DIRECTION_NOT_AVAILABLE;
-    }
-
-    dir = GPIO_DIRECTION_NOT_AVAILABLE;
-
-    ret = fread(buf, 1, sizeof(buf), fd);
-    if (!ret) {
-        printf("Error during reading file\n");
-        goto err;
-    }
-
-    if (!strcmp(buf, GPIO_DIRECTION_IN_STR)) {
-        dir = GPIO_DIRECTION_IN;
-    } else if (!strcmp(buf, GPIO_DIRECTION_OUT_STR)) {
-        dir = GPIO_DIRECTION_OUT;
-    }
-
-err:
-    fclose(fd);
-    return dir;
-}
-
-/**
-* Sets GPIO value
-*
-* @param gpio	GPIO
-* @param val	value
-*
-* @return	0 = operation was performed successfully.
-* @return	-1 = some error occurred.
-*/
-int clibuart_gpio_setValue(uint32_t gpio, int val)
-{
-    char path[50];
-    char buf[2];
-    FILE *fd = NULL;
-    int ret;
-
-    clibuart_setup_gpio_path(gpio, GPIO_VALUE_STR, path, sizeof(path));
-
-    fd = fopen(path, "w");
-
-    if (!fd) {
-        printf("Error during opening file: %s\n", strerror(errno));
-        return -1;
-    }
-
-    snprintf(buf, sizeof(buf), "%d", val);
-    ret = clibuart_write_data(fd, buf);
-    if (ret) {
-        goto err;
-    }
-
-err:
-    fclose(fd);
-    return ret;
-}
-
-/**
-* Gets GPIO value
-*
-* @param gpio	GPIO
-*
-* @return	GPIO value
-*/
-int clibuart_gpio_getValue(uint32_t gpio)
-{
-    char path[50];
-    char buf[2];
-    FILE *fd = NULL;
-    int ret;
-
-    clibuart_setup_gpio_path(gpio, GPIO_VALUE_STR, path, sizeof(path));
-
-    fd = fopen(path, "r");
-
-    if (!fd) {
-        printf("Error during opening file: %s\n", strerror(errno));
-        return -1;
-    }
-
-    ret = fread(buf, 1, sizeof(buf), fd);
-    if (!ret) {
-        printf("Error during reading file\n");
-        ret = -1;
-        goto err;
-    }
-
-    ret = strtol(buf, NULL, 10);
-
-err:
-    fclose(fd);
-    return ret;
-}
-
-/**
-* Setup GPIO
-*
-* @param gpio	GPIO
-* @param dir	GPIO direction
-* @param val	GPIO value
-*
-* @return	0 = operation was performed successfully.
-* @return	-1 = some error occurred.
-*/
-int clibuart_gpio_setup(uint32_t gpio, clibuart_gpio_direction dir, int val)
-{
-    int ret;
-
-    ret = clibuart_gpio_export(gpio);
-    if (ret) {
-        return ret;
-    }
-
-    int i;
-    for (i = 1; i <= 10; i++) {
-        ret = clibuart_gpio_setDirection(gpio, dir);
-        if (!ret) {
-            printf("clibuart_gpio_setup() setDir success: %d\n", i);
-            break;
-        } else {
-            printf("clibuart_gpio_setup() setDir failed wait for 100 ms to next try: %d\n", i);
-            SLEEP(100);
-        }
-    }
-
-    // set gpio value when output clibuart_gpio_getDirection
-    if (dir == GPIO_DIRECTION_OUT) {
-        ret = clibuart_gpio_setValue(gpio, val);
-        if (ret) {
-            return ret;
-        }
-    }
-
-    return ret;
-}
-
-/**
-* Cleans and releases GPIO
-*
-* @param gpio	GPIO
-*
-* @return	0 = operation was performed successfully.
-* @return	-1 = some error occurred.
-*/
-int clibuart_gpio_cleanup(uint32_t gpio)
-{
-    return (clibuart_gpio_unexport(gpio));
 }

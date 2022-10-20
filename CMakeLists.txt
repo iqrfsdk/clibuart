@@ -2,8 +2,6 @@ project(clibuart)
 
 cmake_minimum_required(VERSION 2.8)
 
-find_package(JNI)
-
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -49,7 +47,7 @@ set(clibuart_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 set(clibuart_FOUND TRUE PARENT_SCOPE)
 
 add_subdirectory(include)
-add_subdirectory(uart_iqrf)
+add_subdirectory(src)
 add_subdirectory(examples)
 
 # Configure config file.
