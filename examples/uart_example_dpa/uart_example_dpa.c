@@ -52,7 +52,7 @@ typedef union {
 } T_DPA_PACKET;
 
 /** Defines an alias representing the LED colors. */
-typedef enum _LedColor_t {
+typedef enum LedColor {
     Red,
     Green
 } LedColor_t;
@@ -78,7 +78,7 @@ int execute_dpa_command(const uint8_t *dpaMessage, int dataLen);
 
 void pulse_led(uint16_t address, LedColor_t color);
 
-void print_data_in_hex(unsigned char *data, unsigned int length);
+void print_data_in_hex(const unsigned char *data, unsigned int length);
 
 void empty_rx_buffer(void);
 
@@ -93,6 +93,8 @@ T_DPA_PACKET dpaResponsePacket;
 
 /** UART IQRF configuration structure */
 T_UART_IQRF_CONFIG_STRUCT myUartIqrfConfig;
+/** UART IQRF socket control structure */
+T_UART_SOCKET_CONTROL myUartIqrfSocket;
 
 /**
  * Main entry-point for this application.
@@ -101,12 +103,9 @@ T_UART_IQRF_CONFIG_STRUCT myUartIqrfConfig;
  */
 int main(void)
 {
-    int i;
-    int operResult;
-
     printf("DPA UART example application.\n\r");
 
-    operResult = open_communication();
+    int operResult = open_communication();
     if (operResult) {
         printf("Initialization failed: %d \n\r", operResult);
         return operResult;
@@ -116,7 +115,7 @@ int main(void)
 
     empty_rx_buffer();
 
-    for (i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i) {
         pulse_led(COORDINATOR_ADDRESS, Green);
         //nanosleep(&delayTime, 0);
         SLEEP(TIME_BETWEEN_LEDS_MS);
@@ -155,7 +154,7 @@ int main(void)
  * @param	error         The error identificator.
  * @param	retValue      The returned value.
  */
-void print_error_and_exit(const char *userMessage, int error, int retValue)
+void print_error_and_exit(const char *userMessage, const int error, const int retValue)
 {
     printf("%s: %d", userMessage, error);
     close_communication();
@@ -169,8 +168,6 @@ void print_error_and_exit(const char *userMessage, int error, int retValue)
  */
 int open_communication(void)
 {
-    int operResult;
-
     // Copy UART device name
     if (strlen(UART_IQRF_DEFAULT_DEVICE) > UART_DEV_CAPACITY)
         return BASE_TYPES_OPER_ERROR;
@@ -205,7 +202,7 @@ int open_communication(void)
     myUartIqrfConfig.pgmSwitchGpioPin = PGM_SWITCH_GPIO;
     myUartIqrfConfig.trModuleReset = TR_MODULE_RESET_ENABLE;
 
-    operResult = uart_iqrf_init(&myUartIqrfConfig);
+    const int operResult = uart_iqrf_init(&myUartIqrfConfig, &myUartIqrfSocket);
     if (operResult < 0) {
         printf("Initialization failed: %d \n\r", operResult);
         return operResult;
@@ -228,7 +225,7 @@ int close_communication(void)
         return -1;
     }
 
-    uart_iqrf_destroy();
+    uart_iqrf_destroy(&myUartIqrfConfig, &myUartIqrfSocket);
     return 0;
 }
 
@@ -263,10 +260,7 @@ void pulse_led(uint16_t address, LedColor_t color)
  */
 int execute_dpa_command(const uint8_t *dpaMessage, int dataLen)
 {
-    int operResult;
-    int rxTimeout;
     uint8_t rxDataLen;
-    uint8_t operationInProgress;
 
     typedef enum {
         PROCESS_CONFIMATION = 0,
@@ -280,13 +274,13 @@ int execute_dpa_command(const uint8_t *dpaMessage, int dataLen)
     print_data_in_hex((unsigned char *)dpaMessage, dataLen);
 
     // sending some data to TR module
-    operResult = uart_iqrf_write((uint8_t *)dpaMessage, dataLen);
+    int operResult = uart_iqrf_write(&myUartIqrfSocket, (uint8_t *) dpaMessage, dataLen);
     if (operResult)
         print_error_and_exit("Error during data sending", 0, operResult);
     printf("Data successfully sent to UART device.\n\r");
 
-    operationInProgress = 1;
-    rxTimeout = 500;
+    uint8_t operationInProgress = 1;
+    int rxTimeout = 500;
 
     if ((((T_DPA_PACKET *)dpaMessage)->Request.NADR == COORDINATOR_ADDRESS)
         || (((T_DPA_PACKET *)dpaMessage)->Request.NADR == LOCAL_ADDRESS))
@@ -299,7 +293,7 @@ int execute_dpa_command(const uint8_t *dpaMessage, int dataLen)
     while (operationInProgress) {
 
         printf("Waiting for data.\n\r");
-        operResult = uart_iqrf_read((uint8_t *)&dpaResponsePacket, &rxDataLen, rxTimeout);
+        operResult = uart_iqrf_read(&myUartIqrfSocket, (uint8_t *)&dpaResponsePacket, &rxDataLen, rxTimeout);
 
         switch (crSm) {
         case PROCESS_CONFIMATION:
@@ -354,7 +348,7 @@ int execute_dpa_command(const uint8_t *dpaMessage, int dataLen)
  * @param [in,out]    data  Pointer to data buffer.
  * @param	length      The length of the data.
  */
-void print_data_in_hex(unsigned char *data, unsigned int length)
+void print_data_in_hex(const unsigned char *data, const unsigned int length)
 {
     unsigned int i = 0;
 
@@ -372,14 +366,12 @@ void print_data_in_hex(unsigned char *data, unsigned int length)
  */
 void empty_rx_buffer(void)
 {
-    int operResult;
-    int cnt;
     uint8_t rxDataLen;
     uint8_t rxDataBuffer[UART_IQRF_MAX_DATA_LENGTH];
 
-    cnt = 5;
+    int cnt = 5;
     while (cnt) {
-        operResult = uart_iqrf_read(rxDataBuffer, &rxDataLen, 100);
+        int operResult = uart_iqrf_read(&myUartIqrfSocket, rxDataBuffer, &rxDataLen, 100);
         if (operResult == UART_IQRF_ERROR_TIMEOUT)
             cnt--;
     }
